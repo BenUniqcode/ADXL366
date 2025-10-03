@@ -1,3 +1,12 @@
+# ADXL366
+This library is not ready yet. It will provide Arduino support for the Analog Devices ADXL366 accelerometer. It's based on ADXL345_WE by Wolfgang Ewald (https://github.com/wollewald/ADXL345_WE), the best and most actively maintained Arduino library for the very popular ADXL345, and is designed to be a drop-in replacement for those upgrading from the 345 to the 366, as it uses the same API wherever possible. 
+
+The ADXL366 does almost everything the ADXL345 does, and more, but for approximately 1/100th the power consumption, and the cost is similar, so I expect it to be popular.
+
+For now, though, this is just a fork of the original, and does not actually support the 366 yet.
+
+Here's Wolfgang's original README:
+
 # ADXL345_WE
 Arduino Library for the ADXL345 and the ADXL343 accelerometer. 
 

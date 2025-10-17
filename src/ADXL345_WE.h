@@ -227,10 +227,13 @@ class ADXL345_WE
 
         /* Register bits */
         
-        static constexpr uint8_t ADXL345_FULL_RES         {0x03};
-        static constexpr uint8_t ADXL345_SUPPRESS         {0x03};
-        static constexpr uint8_t ADXL345_LOW_POWER        {0x04};
+        static constexpr uint8_t ADXL345_FULL_RES         {3};
+        static constexpr uint8_t ADXL345_SUPPRESS         {3};
+        static constexpr uint8_t ADXL345_LOW_POWER        {4};
         
+        /* Device ID register value */
+        static constexpr uint8_t ADXL345_DEVID_VALUE      {0xe5}; /* Same for ADXL343 */
+
         /* Other */
         
         static constexpr float MILLI_G_PER_LSB             {3.9};
@@ -238,7 +241,7 @@ class ADXL345_WE
     
         /* Basic settings */
         
-        bool init();
+        bool init(bool startMeasuring = true);
         void setSPIClockSpeed(unsigned long clock);
         void setCorrFactors(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
         bool setDataRate(adxl345_dataRate rate);
@@ -318,10 +321,10 @@ class ADXL345_WE
         int sckPin;  
         int sensorID;
         float rangeFactor;
+        bool adxl345_lowRes;
         void writeRegister(uint8_t reg, uint8_t val);
         bool readRegister8(uint8_t reg, uint8_t *val);
         bool readMultipleRegisters(uint8_t reg, uint8_t count, uint8_t *buf);
-        bool adxl345_lowRes;
 };
 
 #endif

@@ -18,7 +18,7 @@
 
 /************ Basic settings ************/
     
-bool ADXL345_WE::init(){    
+bool ADXL345_WE::init(bool startMeasuring){    
     if(useSPI){
         if(mosiPin == 999){
             _spi->begin();
@@ -40,34 +40,26 @@ bool ADXL345_WE::init(){
         pinMode(csPin, OUTPUT);
         digitalWrite(csPin, HIGH);
     }
-    writeRegister(ADXL345_POWER_CTL, 0);
-    writeRegister(ADXL345_POWER_CTL, 16);   
-    setMeasureMode(true);
-    rangeFactor = 1.0;
-    corrFact = {1.0, 1.0, 1.0};
-    offsetVal = {0.0, 0.0, 0.0};
-    angleOffsetVal = {0.0, 0.0, 0.0};
-    writeRegister(ADXL345_DATA_FORMAT,0); 
-    setFullRes(true); 
-    uint8_t ctrlVal; 
-    bool ok = readRegister8(ADXL345_DATA_FORMAT, &ctrlVal);
-    if(!ok || ctrlVal != 0b1000){
+
+    // Check that the device is present and communicating, by reading the DEVICE_ID register
+    uint8_t val;
+    bool ok = readRegister8(ADXL345_DEVID, &val);
+    if (!ok || val != ADXL345_DEVID_VALUE) {
         return false;
     }
-    writeRegister(ADXL345_INT_ENABLE, 0);
-    writeRegister(ADXL345_INT_MAP,0);
-    writeRegister(ADXL345_TIME_INACT, 0);
-    writeRegister(ADXL345_THRESH_INACT,0);
-    writeRegister(ADXL345_ACT_INACT_CTL, 0);
-    writeRegister(ADXL345_DUR,0);
-    writeRegister(ADXL345_LATENT,0);
-    writeRegister(ADXL345_THRESH_TAP,0);
-    writeRegister(ADXL345_TAP_AXES,0);
-    writeRegister(ADXL345_WINDOW, 0);
-    readAndClearInterrupts();
-    writeRegister(ADXL345_FIFO_CTL,0);
-    writeRegister(ADXL345_FIFO_STATUS,0);
-     
+
+    // Enable full-resolution mode
+    writeRegister(ADXL345_DATA_FORMAT, (1 << ADXL345_FULL_RES));
+    // Check that writing to registers on the device is succeeding
+    ok = readRegister8(ADXL345_DATA_FORMAT, &val);
+    if(!ok || val != (1 << ADXL345_FULL_RES)){
+	    return false;
+    }
+
+    // Start measure mode unless caller asked not to
+    if (startMeasuring) {
+        setMeasureMode(true);
+    }
     return true;
 }
 

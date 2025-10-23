@@ -1,24 +1,15 @@
-/********************************************************************
-* This is a library for the ADXL345 / ADXL343 accelerometer.
-*
-* You'll find an example which should enable you to use the library. 
-*
-* You are free to use it, change it or build on it. In case you like 
-* it, it would be cool if you give it a star.
-* 
-* If you find bugs, please inform me!
-* 
-* Written by Wolfgang (Wolle) Ewald
-* https://wolles-elektronikkiste.de/adxl345-teil-1 (German)
-* https://wolles-elektronikkiste.de/en/adxl345-the-universal-accelerometer-part-1 (English)
-*
-*********************************************************************/
+/**
+ * Arduino library for the Analog Devices ADXL366 / ADXL367 accelerometer
+ * Adapted by Ben Wheeler <ben@uniqcode.com>
+ * from ADXL366_WE by Wolfgang (Wolle) Ewald https://github.com/wollewald/ADXL366_WE
+ * Released under the MIT License.
+ */
 
-#include "ADXL345_WE.h"
+#include "ADXL366_WE.h"
 
 /************ Basic settings ************/
     
-bool ADXL345_WE::init(bool startMeasuring){    
+bool ADXL366_WE::init(bool startMeasuring){    
     if(useSPI){
         if(mosiPin == 999){
             _spi->begin();
@@ -43,16 +34,16 @@ bool ADXL345_WE::init(bool startMeasuring){
 
     // Check that the device is present and communicating, by reading the DEVICE_ID register
     uint8_t val;
-    bool ok = readRegister8(ADXL345_DEVID, &val);
-    if (!ok || val != ADXL345_DEVID_VALUE) {
+    bool ok = readRegister8(ADXL366_DEVID, &val);
+    if (!ok || val != ADXL366_DEVID_VALUE) {
         return false;
     }
 
     // Enable full-resolution mode
-    writeRegister(ADXL345_DATA_FORMAT, (1 << ADXL345_FULL_RES));
+    writeRegister(ADXL366_DATA_FORMAT, (1 << ADXL366_FULL_RES));
     // Check that writing to registers on the device is succeeding
-    ok = readRegister8(ADXL345_DATA_FORMAT, &val);
-    if(!ok || val != (1 << ADXL345_FULL_RES)){
+    ok = readRegister8(ADXL366_DATA_FORMAT, &val);
+    if(!ok || val != (1 << ADXL366_FULL_RES)){
 	    return false;
     }
 
@@ -63,12 +54,12 @@ bool ADXL345_WE::init(bool startMeasuring){
     return true;
 }
 
-void ADXL345_WE::setSPIClockSpeed(unsigned long clock = 5000000){
+void ADXL366_WE::setSPIClockSpeed(unsigned long clock = 5000000){
     spiClock = clock;
     mySPISettings = SPISettings(spiClock, MSBFIRST, SPI_MODE3);
 }
 
-void ADXL345_WE::setCorrFactors(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax){
+void ADXL366_WE::setCorrFactors(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax){
     corrFact.x = UNITS_PER_G / (0.5 * (xMax - xMin));
     corrFact.y = UNITS_PER_G / (0.5 * (yMax - yMin));
     corrFact.z = UNITS_PER_G / (0.5 * (zMax - zMin));
@@ -77,59 +68,59 @@ void ADXL345_WE::setCorrFactors(float xMin, float xMax, float yMin, float yMax, 
     offsetVal.z = (zMax + zMin) * 0.5;
 }
 
-bool ADXL345_WE::setDataRate(adxl345_dataRate rate){
-    if (!readRegister8(ADXL345_BW_RATE, &regVal) || rate == ADXL345_DATA_RATE_ERROR) {
+bool ADXL366_WE::setDataRate(adxl345_dataRate rate){
+    if (!readRegister8(ADXL366_BW_RATE, &regVal) || rate == ADXL366_DATA_RATE_ERROR) {
         return false;
     }
     regVal &= 0xF0;
     regVal |= rate;
-    writeRegister(ADXL345_BW_RATE, regVal);
+    writeRegister(ADXL366_BW_RATE, regVal);
     return true;
 }
     
-adxl345_dataRate ADXL345_WE::getDataRate(){
-    if (!readRegister8(ADXL345_BW_RATE, &regVal)) {
-        return ADXL345_DATA_RATE_ERROR;
+adxl345_dataRate ADXL366_WE::getDataRate(){
+    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
+        return ADXL366_DATA_RATE_ERROR;
     }
     return (adxl345_dataRate)(regVal & 0x0F);
 }
 
 
-String ADXL345_WE::getDataRateAsString(){
+String ADXL366_WE::getDataRateAsString(){
     adxl345_dataRate dataRate = getDataRate();    
     switch(dataRate) {
-        case ADXL345_DATA_RATE_ERROR: return(F("ERROR")); break;
-        case ADXL345_DATA_RATE_3200: return(F("3200 Hz")); break;
-        case ADXL345_DATA_RATE_1600: return(F("1600 Hz")); break;
-        case ADXL345_DATA_RATE_800:  return(F("800 Hz"));  break;
-        case ADXL345_DATA_RATE_400:  return(F("400 Hz"));  break;
-        case ADXL345_DATA_RATE_200:  return(F("200 Hz"));  break;
-        case ADXL345_DATA_RATE_100:  return(F("100 Hz"));  break;
-        case ADXL345_DATA_RATE_50:   return(F("50 Hz"));   break;
-        case ADXL345_DATA_RATE_25:   return(F("25 Hz"));   break;
-        case ADXL345_DATA_RATE_12_5: return(F("12.5 Hz")); break;
-        case ADXL345_DATA_RATE_6_25: return(F("6.25 Hz")); break;
-        case ADXL345_DATA_RATE_3_13: return(F("3.13 Hz")); break;
-        case ADXL345_DATA_RATE_1_56: return(F("1.56 Hz")); break;
-        case ADXL345_DATA_RATE_0_78: return(F("0.78 Hz")); break;
-        case ADXL345_DATA_RATE_0_39: return(F("0.39 Hz")); break;
-        case ADXL345_DATA_RATE_0_20: return(F("0.20 Hz")); break;
-        case ADXL345_DATA_RATE_0_10: return(F("0.10 Hz")); break;
+        case ADXL366_DATA_RATE_ERROR: return(F("ERROR")); break;
+        case ADXL366_DATA_RATE_3200: return(F("3200 Hz")); break;
+        case ADXL366_DATA_RATE_1600: return(F("1600 Hz")); break;
+        case ADXL366_DATA_RATE_800:  return(F("800 Hz"));  break;
+        case ADXL366_DATA_RATE_400:  return(F("400 Hz"));  break;
+        case ADXL366_DATA_RATE_200:  return(F("200 Hz"));  break;
+        case ADXL366_DATA_RATE_100:  return(F("100 Hz"));  break;
+        case ADXL366_DATA_RATE_50:   return(F("50 Hz"));   break;
+        case ADXL366_DATA_RATE_25:   return(F("25 Hz"));   break;
+        case ADXL366_DATA_RATE_12_5: return(F("12.5 Hz")); break;
+        case ADXL366_DATA_RATE_6_25: return(F("6.25 Hz")); break;
+        case ADXL366_DATA_RATE_3_13: return(F("3.13 Hz")); break;
+        case ADXL366_DATA_RATE_1_56: return(F("1.56 Hz")); break;
+        case ADXL366_DATA_RATE_0_78: return(F("0.78 Hz")); break;
+        case ADXL366_DATA_RATE_0_39: return(F("0.39 Hz")); break;
+        case ADXL366_DATA_RATE_0_20: return(F("0.20 Hz")); break;
+        case ADXL366_DATA_RATE_0_10: return(F("0.10 Hz")); break;
         default: return(F("unknown"));
     }
 }
 
-bool ADXL345_WE::setRange(adxl345_range range){
-    if (!readRegister8(ADXL345_DATA_FORMAT, &regVal) || range == ADXL345_RANGE_ERROR) {
+bool ADXL366_WE::setRange(adxl345_range range){
+    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal) || range == ADXL366_RANGE_ERROR) {
         return false;
     }
     if(adxl345_lowRes){
         switch(range){
-            case ADXL345_RANGE_ERROR: return false; break; // Already handled, but avoids compiler warning
-            case ADXL345_RANGE_2G:  rangeFactor = 1.0;  break;
-            case ADXL345_RANGE_4G:  rangeFactor = 2.0;  break;
-            case ADXL345_RANGE_8G:  rangeFactor = 4.0;  break;
-            case ADXL345_RANGE_16G: rangeFactor = 8.0;  break;  
+            case ADXL366_RANGE_ERROR: return false; break; // Already handled, but avoids compiler warning
+            case ADXL366_RANGE_2G:  rangeFactor = 1.0;  break;
+            case ADXL366_RANGE_4G:  rangeFactor = 2.0;  break;
+            case ADXL366_RANGE_8G:  rangeFactor = 4.0;  break;
+            case ADXL366_RANGE_16G: rangeFactor = 8.0;  break;  
         }
     }
     else{
@@ -137,53 +128,53 @@ bool ADXL345_WE::setRange(adxl345_range range){
     }
     regVal &= 0b11111100;
     regVal |= range;
-    writeRegister(ADXL345_DATA_FORMAT, regVal);
+    writeRegister(ADXL366_DATA_FORMAT, regVal);
     return true;
 }
 
-adxl345_range ADXL345_WE::getRange(){
-    if (!readRegister8(ADXL345_DATA_FORMAT, &regVal)) {
-        return ADXL345_RANGE_ERROR;
+adxl345_range ADXL366_WE::getRange(){
+    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
+        return ADXL366_RANGE_ERROR;
     }
     regVal &= 0x03; 
     return adxl345_range(regVal);
 }
 
-bool ADXL345_WE::setFullRes(bool full){
-    if (!readRegister8(ADXL345_DATA_FORMAT, &regVal)) {
+bool ADXL366_WE::setFullRes(bool full){
+    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
         return false;
     }
     if(full){
         adxl345_lowRes = false;
         rangeFactor = 1.0;
-        regVal |= (1<<ADXL345_FULL_RES);
+        regVal |= (1<<ADXL366_FULL_RES);
     }
     else{
         adxl345_lowRes = true;
-        regVal &= ~(1<<ADXL345_FULL_RES);
+        regVal &= ~(1<<ADXL366_FULL_RES);
         if (!setRange(getRange())) {
             return false;
         }
     }
-    writeRegister(ADXL345_DATA_FORMAT, regVal);
+    writeRegister(ADXL366_DATA_FORMAT, regVal);
     return true;
 }
 
-String ADXL345_WE::getRangeAsString(){
+String ADXL366_WE::getRangeAsString(){
     adxl345_range range = getRange();
     switch(range){
-        case ADXL345_RANGE_ERROR: return(F("ERROR")); break;
-        case ADXL345_RANGE_2G:  return(F("2g"));   break;
-        case ADXL345_RANGE_4G:  return(F("4g"));   break;
-        case ADXL345_RANGE_8G:  return(F("8g"));   break;
-        case ADXL345_RANGE_16G: return(F("16g"));  break;
+        case ADXL366_RANGE_ERROR: return(F("ERROR")); break;
+        case ADXL366_RANGE_2G:  return(F("2g"));   break;
+        case ADXL366_RANGE_4G:  return(F("4g"));   break;
+        case ADXL366_RANGE_8G:  return(F("8g"));   break;
+        case ADXL366_RANGE_16G: return(F("16g"));  break;
         default: return(F("unknown"));
         
     }
 }
 
-uint8_t ADXL345_WE::getDeviceID(){
-    if (readRegister8(ADXL345_DEVID, &regVal)) {
+uint8_t ADXL366_WE::getDeviceID(){
+    if (readRegister8(ADXL366_DEVID, &regVal)) {
         return regVal;
     } else {
         return 0;
@@ -192,9 +183,9 @@ uint8_t ADXL345_WE::getDeviceID(){
 
 /************ x,y,z results ************/
 
-bool ADXL345_WE::getRawValues(xyzFloat *rawVal){
+bool ADXL366_WE::getRawValues(xyzFloat *rawVal){
     uint8_t rawData[6]; 
-    if (!readMultipleRegisters(ADXL345_DATAX0, 6, rawData)) {
+    if (!readMultipleRegisters(ADXL366_DATAX0, 6, rawData)) {
         return false;
     }
     rawVal->x = (static_cast<int16_t>((rawData[1] << 8) | rawData[0])) * 1.0;
@@ -203,7 +194,7 @@ bool ADXL345_WE::getRawValues(xyzFloat *rawVal){
     return true;
 }
 
-bool ADXL345_WE::getCorrectedRawValues(xyzFloat *rawVal){
+bool ADXL366_WE::getCorrectedRawValues(xyzFloat *rawVal){
     if (!getRawValues(rawVal)) {
         return false;
     }
@@ -213,7 +204,7 @@ bool ADXL345_WE::getCorrectedRawValues(xyzFloat *rawVal){
     return true;
 }
 
-bool ADXL345_WE::getGValues(xyzFloat *gVal){
+bool ADXL366_WE::getGValues(xyzFloat *gVal){
     if (!getCorrectedRawValues(gVal)) {
         return false;
     }
@@ -223,7 +214,7 @@ bool ADXL345_WE::getGValues(xyzFloat *gVal){
 
 /************ Angles and Orientation ************/ 
 
-bool ADXL345_WE::getAngles(xyzFloat *angleVal){
+bool ADXL366_WE::getAngles(xyzFloat *angleVal){
     xyzFloat gVal;
     if (!getGValues(&gVal)) {
         return false;
@@ -254,7 +245,7 @@ bool ADXL345_WE::getAngles(xyzFloat *angleVal){
     return true;
 }
 
-bool ADXL345_WE::getCorrAngles(xyzFloat *corrAngleVal){
+bool ADXL366_WE::getCorrAngles(xyzFloat *corrAngleVal){
     if (!getAngles(corrAngleVal)) {
         return false;
     }
@@ -262,23 +253,23 @@ bool ADXL345_WE::getCorrAngles(xyzFloat *corrAngleVal){
     return true;
 }
 
-bool ADXL345_WE::measureAngleOffsets(){
+bool ADXL366_WE::measureAngleOffsets(){
     return getAngles(&angleOffsetVal);
 }
 
-xyzFloat ADXL345_WE::getAngleOffsets(){
+xyzFloat ADXL366_WE::getAngleOffsets(){
     return angleOffsetVal;
 }
 
-void ADXL345_WE::setAngleOffsets(const xyzFloat aos){
+void ADXL366_WE::setAngleOffsets(const xyzFloat aos){
     angleOffsetVal = aos;
 }
 
-adxl345_orientation ADXL345_WE::getOrientation(){
+adxl345_orientation ADXL366_WE::getOrientation(){
     adxl345_orientation orientation = FLAT;
     xyzFloat angleVal;
     if (!getAngles(&angleVal)) {
-        return ADXL345_ORIENTATION_ERROR;
+        return ADXL366_ORIENTATION_ERROR;
     }
     if(abs(angleVal.x) < 45){      // |x| < 45
         if(abs(angleVal.y) < 45){      // |y| < 45
@@ -309,11 +300,11 @@ adxl345_orientation ADXL345_WE::getOrientation(){
     return orientation;
 }
 
-String ADXL345_WE::getOrientationAsString(){
+String ADXL366_WE::getOrientationAsString(){
     adxl345_orientation orientation = getOrientation();
     String orientationAsString = "";
     switch(orientation){
-        case ADXL345_ORIENTATION_ERROR: orientationAsString = "ERROR"; break;
+        case ADXL366_ORIENTATION_ERROR: orientationAsString = "ERROR"; break;
         case FLAT:      orientationAsString = "z up";   break;
         case FLAT_1:    orientationAsString = "z down"; break;
         case XY:        orientationAsString = "y up";   break;
@@ -324,19 +315,19 @@ String ADXL345_WE::getOrientationAsString(){
     return orientationAsString;
 }
 
-float ADXL345_WE::getPitch(){
+float ADXL366_WE::getPitch(){
     xyzFloat gVal;
     if (!getGValues(&gVal)) {
-        return ADXL345_FLOAT_ERROR;
+        return ADXL366_FLOAT_ERROR;
     }
     float pitch = (atan2(-gVal.x, sqrt(abs((gVal.y*gVal.y + gVal.z*gVal.z))))*180.0)/M_PI;
     return pitch;
 }
     
-float ADXL345_WE::getRoll(){
+float ADXL366_WE::getRoll(){
     xyzFloat gVal;
     if (!getGValues(&gVal)) {
-        return ADXL345_FLOAT_ERROR;
+        return ADXL366_FLOAT_ERROR;
     }
     float roll = (atan2(gVal.y, gVal.z)*180.0)/M_PI;
     return roll;
@@ -344,103 +335,103 @@ float ADXL345_WE::getRoll(){
 
 /************ Power, Sleep, Standby ************/ 
 
-bool ADXL345_WE::setMeasureMode(bool measure){
-    if (!readRegister8(ADXL345_POWER_CTL, &regVal)) {
+bool ADXL366_WE::setMeasureMode(bool measure){
+    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
     if(measure){
-        regVal |= (1<<ADXL345_MEASURE);
+        regVal |= (1<<ADXL366_MEASURE);
     }
     else{
-        regVal &= ~(1<<ADXL345_MEASURE);
+        regVal &= ~(1<<ADXL366_MEASURE);
     }
-    writeRegister(ADXL345_POWER_CTL, regVal);
+    writeRegister(ADXL366_POWER_CTL, regVal);
     return true;
 }
 
-bool ADXL345_WE::setSleep(bool sleep, adxl345_wUpFreq freq){
-    if (!readRegister8(ADXL345_POWER_CTL, &regVal)) {
+bool ADXL366_WE::setSleep(bool sleep, adxl345_wUpFreq freq){
+    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
-    if (freq != ADXL345_WUP_FQ_UNSET) {
+    if (freq != ADXL366_WUP_FQ_UNSET) {
         regVal &= 0b11111100;
         regVal |= freq;
     }
     if(sleep){
-        regVal |= (1<<ADXL345_SLEEP);
+        regVal |= (1<<ADXL366_SLEEP);
     }
     else{
         // it is recommended to enter Stand Mode when clearing the Sleep Bit!
         if (!setMeasureMode(false)) {
             return false;
         }
-        regVal &= ~(1<<ADXL345_SLEEP);
-        regVal &= ~(1<<ADXL345_MEASURE);
+        regVal &= ~(1<<ADXL366_SLEEP);
+        regVal &= ~(1<<ADXL366_MEASURE);
     }
-    writeRegister(ADXL345_POWER_CTL, regVal);
+    writeRegister(ADXL366_POWER_CTL, regVal);
     if(!sleep){
         setMeasureMode(true); // No return check here as the setting has been changed already
     }
     return true;
 }
     
-bool ADXL345_WE::setAutoSleep(bool autoSleep, adxl345_wUpFreq freq){
-    if (!readRegister8(ADXL345_POWER_CTL, &regVal)) {
+bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl345_wUpFreq freq){
+    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
     if(autoSleep){
         // Both AUTO_SLEEP and LINK bits must be set
-        regVal |= (1<<ADXL345_AUTO_SLEEP) | (1<<ADXL345_LINK);
+        regVal |= (1<<ADXL366_AUTO_SLEEP) | (1<<ADXL366_LINK);
     } else {
         // The AUTO_SLEEP bit is cleared, but leave the LINK bit alone in case set by something else
-        regVal &= ~(1<<ADXL345_AUTO_SLEEP);
+        regVal &= ~(1<<ADXL366_AUTO_SLEEP);
     }
-    if (freq != ADXL345_WUP_FQ_UNSET) {
+    if (freq != ADXL366_WUP_FQ_UNSET) {
         regVal &= 0b11111100;
         regVal |= freq;
     }
-    writeRegister(ADXL345_POWER_CTL, regVal);
+    writeRegister(ADXL366_POWER_CTL, regVal);
     return true;
 }
         
-bool ADXL345_WE::isAsleep(){
-    if (!readRegister8(ADXL345_ACT_TAP_STATUS, &regVal)) {
+bool ADXL366_WE::isAsleep(){
+    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
         return false; // Not ideal
     }
-    return regVal & (1<<ADXL345_ASLEEP);
+    return regVal & (1<<ADXL366_ASLEEP);
 }
 
-bool ADXL345_WE::setLowPower(bool lowpwr){
-    if (!readRegister8(ADXL345_BW_RATE, &regVal)) {
+bool ADXL366_WE::setLowPower(bool lowpwr){
+    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
         return false;
     }
     if(lowpwr){
-        regVal |= (1<<ADXL345_LOW_POWER);
+        regVal |= (1<<ADXL366_LOW_POWER);
     }
     else{
-        regVal &= ~(1<<ADXL345_LOW_POWER);
+        regVal &= ~(1<<ADXL366_LOW_POWER);
     }
-    writeRegister(ADXL345_BW_RATE, regVal);
+    writeRegister(ADXL366_BW_RATE, regVal);
     return true;
 }
 
-bool ADXL345_WE::isLowPower(){
-    if (!readRegister8(ADXL345_BW_RATE, &regVal)) {
+bool ADXL366_WE::isLowPower(){
+    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
         return false; // Not ideal
     }
-    return regVal & (1<<ADXL345_LOW_POWER);
+    return regVal & (1<<ADXL366_LOW_POWER);
 }
             
 /************ Interrupts ************/
 
 
-bool ADXL345_WE::setInterrupt(adxl345_int type, uint8_t pin){
-    if (!readRegister8(ADXL345_INT_ENABLE, &regVal)) {
+bool ADXL366_WE::setInterrupt(adxl345_int type, uint8_t pin){
+    if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
         return false;
     }
     regVal |= (1<<type);
-    writeRegister(ADXL345_INT_ENABLE, regVal);
-    if (!readRegister8(ADXL345_INT_MAP, &regVal)) {
+    writeRegister(ADXL366_INT_ENABLE, regVal);
+    if (!readRegister8(ADXL366_INT_MAP, &regVal)) {
         return false;
     }
     if(pin == INT_PIN_1){
@@ -449,206 +440,206 @@ bool ADXL345_WE::setInterrupt(adxl345_int type, uint8_t pin){
     else {
         regVal |= (1<<type);
     }
-    writeRegister(ADXL345_INT_MAP, regVal);
+    writeRegister(ADXL366_INT_MAP, regVal);
     return true;
 }
 
-bool ADXL345_WE::setInterruptPolarity(uint8_t pol){
-    if (!readRegister8(ADXL345_DATA_FORMAT, &regVal)) {
+bool ADXL366_WE::setInterruptPolarity(uint8_t pol){
+    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
         return false;
     }
-    if(pol == ADXL345_ACT_HIGH){
+    if(pol == ADXL366_ACT_HIGH){
         regVal &= ~(0b00100000);
     }
-    else if(pol == ADXL345_ACT_LOW){
+    else if(pol == ADXL366_ACT_LOW){
         regVal |= 0b00100000;
     }
-    writeRegister(ADXL345_DATA_FORMAT, regVal);
+    writeRegister(ADXL366_DATA_FORMAT, regVal);
     return true;
 }
 
-bool ADXL345_WE::deleteInterrupt(adxl345_int type){
-    if (!readRegister8(ADXL345_INT_ENABLE, &regVal)) {
+bool ADXL366_WE::deleteInterrupt(adxl345_int type){
+    if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
         return false;
     }
     regVal &= ~(1<<type);
-    writeRegister(ADXL345_INT_ENABLE, regVal);
+    writeRegister(ADXL366_INT_ENABLE, regVal);
     return true;
 }
 
-uint8_t ADXL345_WE::readAndClearInterrupts(){
-    if (!readRegister8(ADXL345_INT_SOURCE, &regVal)) {
+uint8_t ADXL366_WE::readAndClearInterrupts(){
+    if (!readRegister8(ADXL366_INT_SOURCE, &regVal)) {
         return 0; // Not ideal
     }
     return regVal;
 }
 
-bool ADXL345_WE::checkInterrupt(uint8_t source, adxl345_int type){
+bool ADXL366_WE::checkInterrupt(uint8_t source, adxl345_int type){
     return source & (1<<type);
 }
 
-bool ADXL345_WE::setLinkBit(bool link){
-    if (!readRegister8(ADXL345_POWER_CTL, &regVal)) {
+bool ADXL366_WE::setLinkBit(bool link){
+    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
     if(link){
-        regVal |= (1<<ADXL345_LINK);
+        regVal |= (1<<ADXL366_LINK);
     }
     else{
-        regVal &= ~(1<<ADXL345_LINK);
+        regVal &= ~(1<<ADXL366_LINK);
     }
-    writeRegister(ADXL345_POWER_CTL, regVal);
+    writeRegister(ADXL366_POWER_CTL, regVal);
     return true;
 }
 
-void ADXL345_WE::setFreeFallThresholds(float ffg, float fft){
+void ADXL366_WE::setFreeFallThresholds(float ffg, float fft){
     regVal = static_cast<uint8_t>(round(ffg / 0.0625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_THRESH_FF, regVal);
+    writeRegister(ADXL366_THRESH_FF, regVal);
     regVal = static_cast<uint8_t>(round(fft / 5));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_TIME_FF, regVal);
+    writeRegister(ADXL366_TIME_FF, regVal);
 }
 
-bool ADXL345_WE::setActivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold){
+bool ADXL366_WE::setActivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold){
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
     }
     
-    writeRegister(ADXL345_THRESH_ACT, regVal);
+    writeRegister(ADXL366_THRESH_ACT, regVal);
 
-    if (!readRegister8(ADXL345_ACT_INACT_CTL, &regVal)) {
+    if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
     regVal &= 0x0F;
     regVal |= (static_cast<uint8_t>(mode) + static_cast<uint8_t>(axes))<<4;
-    writeRegister(ADXL345_ACT_INACT_CTL, regVal);
+    writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }
 
-bool ADXL345_WE::setInactivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold, uint8_t inactTime){
+bool ADXL366_WE::setInactivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold, uint8_t inactTime){
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_THRESH_INACT, regVal);
-    writeRegister(ADXL345_TIME_INACT, inactTime);
+    writeRegister(ADXL366_THRESH_INACT, regVal);
+    writeRegister(ADXL366_TIME_INACT, inactTime);
 
-    if (!readRegister8(ADXL345_ACT_INACT_CTL, &regVal)) {
+    if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
     regVal &= 0xF0;
     regVal |= static_cast<uint8_t>(mode) + static_cast<uint16_t>(axes);
-    writeRegister(ADXL345_ACT_INACT_CTL, regVal);
+    writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }
 
-bool ADXL345_WE::setGeneralTapParameters(adxl345_actTapSet axes, float threshold, float duration, float latent){
-    if (!readRegister8(ADXL345_TAP_AXES, &regVal)) {
+bool ADXL366_WE::setGeneralTapParameters(adxl345_actTapSet axes, float threshold, float duration, float latent){
+    if (!readRegister8(ADXL366_TAP_AXES, &regVal)) {
         return false;
     }
     regVal &= 0b11111000;
     regVal |= static_cast<uint8_t>(axes);
-    writeRegister(ADXL345_TAP_AXES, regVal);
+    writeRegister(ADXL366_TAP_AXES, regVal);
     
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_THRESH_TAP,regVal);
+    writeRegister(ADXL366_THRESH_TAP,regVal);
     
     regVal = static_cast<uint8_t>(round(duration / 0.625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_DUR, regVal);
+    writeRegister(ADXL366_DUR, regVal);
     
     regVal = static_cast<uint8_t>(round(latent / 1.25));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL345_LATENT, regVal);     
+    writeRegister(ADXL366_LATENT, regVal);     
     return true; 
 }
 
-bool ADXL345_WE::setAdditionalDoubleTapParameters(bool suppress, float window){
-    if (!readRegister8(ADXL345_TAP_AXES, &regVal)) {
+bool ADXL366_WE::setAdditionalDoubleTapParameters(bool suppress, float window){
+    if (!readRegister8(ADXL366_TAP_AXES, &regVal)) {
         return false;
     }
     if(suppress){
-        regVal |= (1<<ADXL345_SUPPRESS);
+        regVal |= (1<<ADXL366_SUPPRESS);
     }
     else{
-        regVal &= ~(1<<ADXL345_SUPPRESS);
+        regVal &= ~(1<<ADXL366_SUPPRESS);
     }
-    writeRegister(ADXL345_TAP_AXES, regVal);
+    writeRegister(ADXL366_TAP_AXES, regVal);
     
     regVal = static_cast<uint8_t>(round(window / 1.25));
-    writeRegister(ADXL345_WINDOW, regVal);
+    writeRegister(ADXL366_WINDOW, regVal);
     return true;
 }
 
-uint8_t ADXL345_WE::getActTapStatus(){
-    if (!readRegister8(ADXL345_ACT_TAP_STATUS, &regVal)) {
+uint8_t ADXL366_WE::getActTapStatus(){
+    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
         return 0; // Not ideal
     }
     return regVal;
 }
 
-String ADXL345_WE::getActTapStatusAsString(){
-    if (!readRegister8(ADXL345_ACT_TAP_STATUS, &regVal)) {
+String ADXL366_WE::getActTapStatusAsString(){
+    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
         return String("ERROR");
     }
     String returnStr = "";
-    if(regVal & (1<<ADXL345_TAP_Z)) { returnStr += "TAP-Z "; }
-    if(regVal & (1<<ADXL345_TAP_Y)) { returnStr += "TAP-Y "; }
-    if(regVal & (1<<ADXL345_TAP_X)) { returnStr += "TAP-X "; }
-    if(regVal & (1<<ADXL345_ACT_Z)) { returnStr += "ACT-Z "; }
-    if(regVal & (1<<ADXL345_ACT_Y)) { returnStr += "ACT-Y "; }
-    if(regVal & (1<<ADXL345_ACT_X)) { returnStr += "ACT-X "; }
+    if(regVal & (1<<ADXL366_TAP_Z)) { returnStr += "TAP-Z "; }
+    if(regVal & (1<<ADXL366_TAP_Y)) { returnStr += "TAP-Y "; }
+    if(regVal & (1<<ADXL366_TAP_X)) { returnStr += "TAP-X "; }
+    if(regVal & (1<<ADXL366_ACT_Z)) { returnStr += "ACT-Z "; }
+    if(regVal & (1<<ADXL366_ACT_Y)) { returnStr += "ACT-Y "; }
+    if(regVal & (1<<ADXL366_ACT_X)) { returnStr += "ACT-X "; }
     
     return returnStr;
 }
 
 /************ FIFO ************/
 
-bool ADXL345_WE::setFifoParameters(adxl345_triggerInt intNumber, uint8_t samples){
-    if (!readRegister8(ADXL345_FIFO_CTL, &regVal)) {
+bool ADXL366_WE::setFifoParameters(adxl345_triggerInt intNumber, uint8_t samples){
+    if (!readRegister8(ADXL366_FIFO_CTL, &regVal)) {
         return false;
     }
     regVal &= 0b11000000;
     regVal |= (samples-1);
-    if(intNumber == ADXL345_TRIGGER_INT_2){
+    if(intNumber == ADXL366_TRIGGER_INT_2){
         regVal |= 0x20;
     }
-    writeRegister(ADXL345_FIFO_CTL, regVal);
+    writeRegister(ADXL366_FIFO_CTL, regVal);
     return true;
 }
 
-bool ADXL345_WE::setFifoMode(adxl345_fifoMode mode){
-    if (!readRegister8(ADXL345_FIFO_CTL, &regVal)) {
+bool ADXL366_WE::setFifoMode(adxl345_fifoMode mode){
+    if (!readRegister8(ADXL366_FIFO_CTL, &regVal)) {
         return false;
     }
     regVal &= 0b00111111;
     regVal |= (mode<<6);
-    writeRegister(ADXL345_FIFO_CTL,regVal);
+    writeRegister(ADXL366_FIFO_CTL,regVal);
     return true;
 }
 
-uint8_t ADXL345_WE::getFifoStatus(){
-    if (!readRegister8(ADXL345_FIFO_STATUS, &regVal)) {
+uint8_t ADXL366_WE::getFifoStatus(){
+    if (!readRegister8(ADXL366_FIFO_STATUS, &regVal)) {
         return 0; // Not ideal
     }
     return regVal;
 }
 
-bool ADXL345_WE::resetTrigger(){
-    return setFifoMode(ADXL345_BYPASS) && setFifoMode(ADXL345_TRIGGER);
+bool ADXL366_WE::resetTrigger(){
+    return setFifoMode(ADXL366_BYPASS) && setFifoMode(ADXL366_TRIGGER);
 }
 
 
@@ -656,7 +647,7 @@ bool ADXL345_WE::resetTrigger(){
     private functions
 *************************************************/
 
-void ADXL345_WE::writeRegister(uint8_t reg, uint8_t val){
+void ADXL366_WE::writeRegister(uint8_t reg, uint8_t val){
     if(!useSPI){
         _wire->beginTransmission(i2cAddress);
         _wire->write(reg);
@@ -674,7 +665,7 @@ void ADXL345_WE::writeRegister(uint8_t reg, uint8_t val){
     }
 }
   
-bool ADXL345_WE::readRegister8(uint8_t reg, uint8_t *val){
+bool ADXL366_WE::readRegister8(uint8_t reg, uint8_t *val){
     if(!useSPI){    
         bool ok = true;
         _wire->beginTransmission(i2cAddress);
@@ -702,7 +693,7 @@ bool ADXL345_WE::readRegister8(uint8_t reg, uint8_t *val){
     }
 }
 
-bool ADXL345_WE::readMultipleRegisters(uint8_t reg, uint8_t count, uint8_t *buf){
+bool ADXL366_WE::readMultipleRegisters(uint8_t reg, uint8_t count, uint8_t *buf){
     if(!useSPI){
         bool ok = true;
         _wire->beginTransmission(i2cAddress);

@@ -1,5 +1,5 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL343_WE library
+* Example sketch for the ADXL366_WE / ADXL367_WE library
 *
 * This sketch shows how use SPI for the basic data sketch. Please apply the 
 * same steps in the other sketches if you want to use SPI.  
@@ -10,7 +10,7 @@
 * 
 ***************************************************************************/
 
-#include<ADXL345_WE.h>
+#include<ADXL366_WE.h>
 #include<SPI.h>
 #define CS_PIN 5   // Chip Select Pin
 /* In case you want to change the default SPI pins (e.g. for ESP32 or STM32 boards), uncomment and adjust: */
@@ -18,18 +18,18 @@
 // #define MISO_PIN 17
 // #define SCK_PIN 16
 /*  If you use an ESP8266, the standard CS Pin (e.g. D8/GPIO15 on a WEMOS D1 mini or NodeMCU) might not work since the CS pin of 
-  the ADXL345 has a pull-up resistor on most modules. If D8 is high at reset, the ESP8266 will not boot. In that case choose a 
+  the ADXL366 has a pull-up resistor on most modules. If D8 is high at reset, the ESP8266 will not boot. In that case choose a 
   different pin as CS!  */
 
 bool spi = true;    // flag indicating that SPI shall be used
 
-/* There are three ways to create your ADXL345 object in SPI mode
- * ADXL345_WE myAcc = ADXL345_WE(CS_PIN, spi)     -> uses SPI, spi is just a flag, see SPI example
- * ADXL345_WE myAcc = ADXL345_WE(&SPI, CS_PIN, spi) -> uses SPI / passes the SPI object, spi is just a flag, see SPI example
- * ADXL345_WE myAcc = ADXL345_WE(&SPI, CS_PIN, spi, MOSI_PIN, MISO_PIN, SCK_PIN) -> like the latter, but also changes the SPI pins  
+/* There are three ways to create your ADXL366 object in SPI mode
+ * ADXL366_WE myAcc = ADXL366_WE(CS_PIN, spi)     -> uses SPI, spi is just a flag, see SPI example
+ * ADXL366_WE myAcc = ADXL366_WE(&SPI, CS_PIN, spi) -> uses SPI / passes the SPI object, spi is just a flag, see SPI example
+ * ADXL366_WE myAcc = ADXL366_WE(&SPI, CS_PIN, spi, MOSI_PIN, MISO_PIN, SCK_PIN) -> like the latter, but also changes the SPI pins  
  */
 
-ADXL345_WE myAcc = ADXL345_WE(CS_PIN, spi);
+ADXL366_WE myAcc = ADXL366_WE(CS_PIN, spi);
 
 /* Changing SPI pins on STM32 boards can be a bit diffcult - the following worked on a Nucleo-L432KC board:
 
@@ -38,43 +38,43 @@ ADXL345_WE myAcc = ADXL345_WE(CS_PIN, spi);
     #define MISO_PIN D10 
     #define SCK_PIN A1 
     bool spi = true;
-    ADXL345_WE myAcc = ADXL345_WE(&SPI, CS_PIN, spi, MOSI_PIN, MISO_PIN, SCK_PIN);
+    ADXL366_WE myAcc = ADXL366_WE(&SPI, CS_PIN, spi, MOSI_PIN, MISO_PIN, SCK_PIN);
 
    Or, using the same pins:
     SPIClass mySPI(MOSI_PIN, MISO_PIN, SCK_PIN); // don't pass the CS-Pin (=SSEL)
-    ADXL345_WE myAcc = ADXL345_WE(&mySPI, CS_PIN, spi);
+    ADXL366_WE myAcc = ADXL366_WE(&mySPI, CS_PIN, spi);
 */
 
 void setup(){
   Serial.begin(115200);
-  Serial.println("ADXL345_Sketch - Basic Data");
+  Serial.println("ADXL366_Sketch - Basic Data");
 
 /* You can set the SPI clock speed. Default is 5 MHz. */
 //  myAcc.setSPIClockSpeed(4000000);
 
   if(!myAcc.init()){
-    Serial.println("ADXL345 not connected!");
+    Serial.println("ADXL366 not connected!");
   }
    
 /* Choose the data rate         Hz
-    ADXL345_DATA_RATE_3200    3200
-    ADXL345_DATA_RATE_1600    1600
-    ADXL345_DATA_RATE_800      800
-    ADXL345_DATA_RATE_400      400
-    ADXL345_DATA_RATE_200      200
-    ADXL345_DATA_RATE_100      100
-    ADXL345_DATA_RATE_50        50
-    ADXL345_DATA_RATE_25        25
-    ADXL345_DATA_RATE_12_5      12.5  
-    ADXL345_DATA_RATE_6_25       6.25
-    ADXL345_DATA_RATE_3_13       3.13
-    ADXL345_DATA_RATE_1_56       1.56
-    ADXL345_DATA_RATE_0_78       0.78
-    ADXL345_DATA_RATE_0_39       0.39
-    ADXL345_DATA_RATE_0_20       0.20
-    ADXL345_DATA_RATE_0_10       0.10
+    ADXL366_DATA_RATE_3200    3200
+    ADXL366_DATA_RATE_1600    1600
+    ADXL366_DATA_RATE_800      800
+    ADXL366_DATA_RATE_400      400
+    ADXL366_DATA_RATE_200      200
+    ADXL366_DATA_RATE_100      100
+    ADXL366_DATA_RATE_50        50
+    ADXL366_DATA_RATE_25        25
+    ADXL366_DATA_RATE_12_5      12.5  
+    ADXL366_DATA_RATE_6_25       6.25
+    ADXL366_DATA_RATE_3_13       3.13
+    ADXL366_DATA_RATE_1_56       1.56
+    ADXL366_DATA_RATE_0_78       0.78
+    ADXL366_DATA_RATE_0_39       0.39
+    ADXL366_DATA_RATE_0_20       0.20
+    ADXL366_DATA_RATE_0_10       0.10
 */
-  myAcc.setDataRate(ADXL345_DATA_RATE_12_5);
+  myAcc.setDataRate(ADXL366_DATA_RATE_12_5);
   delay(100);
   Serial.print("Data rate: ");
   Serial.print(myAcc.getDataRateAsString());
@@ -86,12 +86,12 @@ void setup(){
   // myAcc.setFullRes(false);
 
 /* Choose the measurement range
-    ADXL345_RANGE_16G    16g     
-    ADXL345_RANGE_8G      8g     
-    ADXL345_RANGE_4G      4g   
-    ADXL345_RANGE_2G      2g
+    ADXL366_RANGE_16G    16g     
+    ADXL366_RANGE_8G      8g     
+    ADXL366_RANGE_4G      4g   
+    ADXL366_RANGE_2G      2g
 */ 
-  myAcc.setRange(ADXL345_RANGE_4G);
+  myAcc.setRange(ADXL366_RANGE_4G);
   Serial.print("  /  g-Range: ");
   Serial.println(myAcc.getRangeAsString());
   Serial.println();

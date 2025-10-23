@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * This is a library for the ADXL345 / ADXL343 accelerometer.
+ * This is a library for the ADXL366 / ADXL367 accelerometer.
  *
  * You'll find several example sketches which should enable you to use the library. 
  *
@@ -10,14 +10,14 @@
  * If you find bugs, please inform me!
  * 
  * Written by Wolfgang (Wolle) Ewald
- * https://wolles-elektronikkiste.de/adxl345-teil-1 (German)
- * https://wolles-elektronikkiste.de/en/adxl345-the-universal-accelerometer-part-1 (English)
+ * https://wolles-elektronikkiste.de/ADXL366-teil-1 (German)
+ * https://wolles-elektronikkiste.de/en/ADXL366-the-universal-accelerometer-part-1 (English)
  *
  * 
  ******************************************************************************/
 
-#ifndef ADXL343_WE_H_
-#define ADXL343_WE_H_
+#ifndef ADXL367_WE_H_
+#define ADXL367_WE_H_
 
 #if (ARDUINO >= 100)
  #include "Arduino.h"
@@ -25,14 +25,14 @@
  #include "WProgram.h"
 #endif
 
-#include "ADXL345_WE.h"
+#include "ADXL366_WE.h"
 #include <Wire.h>
 #include <SPI.h>
 #include "xyzFloat.h"
 
-class ADXL343_WE : public ADXL345_WE {
+class ADXL367_WE : public ADXL366_WE {
     public:
-        using ADXL345_WE::ADXL345_WE;               
+        using ADXL366_WE::ADXL366_WE;               
 };
 
 

@@ -1,7 +1,7 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL343 library
+* Example sketch for the ADXL345_WE / ADXL367 library
 *
-* This sketch shows how to get the basic raw and g values from the ADXL343. 
+* This sketch shows how to get the basic raw and g values from the ADXL367. 
 *  
 * Further information can be found on:
 * https://wolles-elektronikkiste.de/adxl345-teil-1 (German)
@@ -10,45 +10,45 @@
 ***************************************************************************/
 
 #include<Wire.h>
-#include<ADXL343_WE.h>
-#define ADXL343_I2CADDR 0x53 // 0x1D if SDO = HIGH
+#include<ADXL367_WE.h>
+#define ADXL367_I2CADDR 0x53 // 0x1D if SDO = HIGH
 
-/* There are several ways to create your ADXL343 object:
- * ADXL343_WE myAcc = ADXL343_WE()                -> uses Wire / I2C Address = 0x53
- * ADXL343_WE myAcc = ADXL343_WE(ADXL343_I2CADDR) -> uses Wire / ADXL343_I2CADDR
- * ADXL343_WE myAcc = ADXL343_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL343_I2CADDR
- * ADXL343_WE myAcc = ADXL343_WE(&wire2, ADXL343_I2CADDR) -> all together
+/* There are several ways to create your ADXL367 object:
+ * ADXL367_WE myAcc = ADXL367_WE()                -> uses Wire / I2C Address = 0x53
+ * ADXL367_WE myAcc = ADXL367_WE(ADXL367_I2CADDR) -> uses Wire / ADXL367_I2CADDR
+ * ADXL367_WE myAcc = ADXL367_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL367_I2CADDR
+ * ADXL367_WE myAcc = ADXL367_WE(&wire2, ADXL367_I2CADDR) -> all together
  */
-ADXL343_WE myAcc = ADXL343_WE(ADXL343_I2CADDR);
+ADXL367_WE myAcc = ADXL367_WE(ADXL367_I2CADDR);
 
 void setup(){
   Wire.begin();
   Serial.begin(115200);
-  Serial.println("ADXL343_Sketch - Basic Data");
+  Serial.println("ADXL367_Sketch - Basic Data");
   Serial.println();
   if(!myAcc.init()){
-    Serial.println("ADXL343 not connected!");
+    Serial.println("ADXL367 not connected!");
   }
    
 /* Choose the data rate         Hz
-    ADXL343_DATA_RATE_3200    3200
-    ADXL343_DATA_RATE_1600    1600
-    ADXL343_DATA_RATE_800      800
-    ADXL343_DATA_RATE_400      400
-    ADXL343_DATA_RATE_200      200
-    ADXL343_DATA_RATE_100      100
-    ADXL343_DATA_RATE_50        50
-    ADXL343_DATA_RATE_25        25
-    ADXL343_DATA_RATE_12_5      12.5  
-    ADXL343_DATA_RATE_6_25       6.25
-    ADXL343_DATA_RATE_3_13       3.13
-    ADXL343_DATA_RATE_1_56       1.56
-    ADXL343_DATA_RATE_0_78       0.78
-    ADXL343_DATA_RATE_0_39       0.39
-    ADXL343_DATA_RATE_0_20       0.20
-    ADXL343_DATA_RATE_0_10       0.10
+    ADXL367_DATA_RATE_3200    3200
+    ADXL367_DATA_RATE_1600    1600
+    ADXL367_DATA_RATE_800      800
+    ADXL367_DATA_RATE_400      400
+    ADXL367_DATA_RATE_200      200
+    ADXL367_DATA_RATE_100      100
+    ADXL367_DATA_RATE_50        50
+    ADXL367_DATA_RATE_25        25
+    ADXL367_DATA_RATE_12_5      12.5  
+    ADXL367_DATA_RATE_6_25       6.25
+    ADXL367_DATA_RATE_3_13       3.13
+    ADXL367_DATA_RATE_1_56       1.56
+    ADXL367_DATA_RATE_0_78       0.78
+    ADXL367_DATA_RATE_0_39       0.39
+    ADXL367_DATA_RATE_0_20       0.20
+    ADXL367_DATA_RATE_0_10       0.10
 */
-  myAcc.setDataRate(ADXL343_DATA_RATE_50);
+  myAcc.setDataRate(ADXL367_DATA_RATE_50);
   delay(100);
   Serial.print("Data rate: ");
   Serial.print(myAcc.getDataRateAsString());
@@ -60,12 +60,12 @@ void setup(){
   // myAcc.setFullRes(false);
 
 /* Choose the measurement range
-    ADXL343_RANGE_16G    16g     
-    ADXL343_RANGE_8G      8g     
-    ADXL343_RANGE_4G      4g   
-    ADXL343_RANGE_2G      2g
+    ADXL367_RANGE_16G    16g     
+    ADXL367_RANGE_8G      8g     
+    ADXL367_RANGE_4G      4g   
+    ADXL367_RANGE_2G      2g
 */ 
-  myAcc.setRange(ADXL343_RANGE_4G);
+  myAcc.setRange(ADXL367_RANGE_4G);
   Serial.print("  /  g-Range: ");
   Serial.println(myAcc.getRangeAsString());
   Serial.println();

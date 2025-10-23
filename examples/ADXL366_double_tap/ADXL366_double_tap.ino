@@ -1,5 +1,5 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL343_WE library
+* Example sketch for the ADXL366_WE / ADXL367_WE library
 *
 * This sketch shows how to use the double tap function in combination with 
 * single tap.
@@ -11,61 +11,61 @@
 ***************************************************************************/
 
 #include<Wire.h>
-#include<ADXL345_WE.h>
-#define ADXL345_I2CADDR 0x53  // 0x1D if SDO = HIGH
+#include<ADXL366_WE.h>
+#define ADXL366_I2CADDR 0x53  // 0x1D if SDO = HIGH
 const int int1Pin = 2;
 volatile bool tap = false;
 
-/* There are several ways to create your ADXL345 object:
- * ADXL345_WE myAcc = ADXL345_WE()                -> uses Wire / I2C Address = 0x53
- * ADXL345_WE myAcc = ADXL345_WE(ADXL345_I2CADDR) -> uses Wire / ADXL345_I2CADDR
- * ADXL345_WE myAcc = ADXL345_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL345_I2CADDR
- * ADXL345_WE myAcc = ADXL345_WE(&wire2, ADXL345_I2CADDR) -> all together
+/* There are several ways to create your ADXL366 object:
+ * ADXL366_WE myAcc = ADXL366_WE()                -> uses Wire / I2C Address = 0x53
+ * ADXL366_WE myAcc = ADXL366_WE(ADXL366_I2CADDR) -> uses Wire / ADXL366_I2CADDR
+ * ADXL366_WE myAcc = ADXL366_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL366_I2CADDR
+ * ADXL366_WE myAcc = ADXL366_WE(&wire2, ADXL366_I2CADDR) -> all together
  */
-ADXL345_WE myAcc = ADXL345_WE(ADXL345_I2CADDR);
+ADXL366_WE myAcc = ADXL366_WE(ADXL366_I2CADDR);
 
 void setup() {
   Wire.begin();
   Serial.begin(115200);
   pinMode(int1Pin, INPUT);
-  Serial.println("ADXL345_Sketch - Single Tap Interrupt");
+  Serial.println("ADXL366_Sketch - Single Tap Interrupt");
   Serial.println();
   if (!myAcc.init()) {
-    Serial.println("ADXL345 not connected!");
+    Serial.println("ADXL366 not connected!");
   }
 
-/* Insert your data from ADXL345_calibration.ino and uncomment for more precise results */
+/* Insert your data from ADXL366_calibration.ino and uncomment for more precise results */
   // myAcc.setCorrFactors(-266.0, 285.0, -268.0, 278.0, -291.0, 214.0);
   
 /* Choose the data rate         Hz
-    ADXL345_DATA_RATE_3200    3200
-    ADXL345_DATA_RATE_1600    1600
-    ADXL345_DATA_RATE_800      800
-    ADXL345_DATA_RATE_400      400
-    ADXL345_DATA_RATE_200      200
-    ADXL345_DATA_RATE_100      100
-    ADXL345_DATA_RATE_50        50
-    ADXL345_DATA_RATE_25        25
-    ADXL345_DATA_RATE_12_5      12.5  
-    ADXL345_DATA_RATE_6_25       6.25
-    ADXL345_DATA_RATE_3_13       3.13
-    ADXL345_DATA_RATE_1_56       1.56
-    ADXL345_DATA_RATE_0_78       0.78
-    ADXL345_DATA_RATE_0_39       0.39
-    ADXL345_DATA_RATE_0_20       0.20
-    ADXL345_DATA_RATE_0_10       0.10
+    ADXL366_DATA_RATE_3200    3200
+    ADXL366_DATA_RATE_1600    1600
+    ADXL366_DATA_RATE_800      800
+    ADXL366_DATA_RATE_400      400
+    ADXL366_DATA_RATE_200      200
+    ADXL366_DATA_RATE_100      100
+    ADXL366_DATA_RATE_50        50
+    ADXL366_DATA_RATE_25        25
+    ADXL366_DATA_RATE_12_5      12.5  
+    ADXL366_DATA_RATE_6_25       6.25
+    ADXL366_DATA_RATE_3_13       3.13
+    ADXL366_DATA_RATE_1_56       1.56
+    ADXL366_DATA_RATE_0_78       0.78
+    ADXL366_DATA_RATE_0_39       0.39
+    ADXL366_DATA_RATE_0_20       0.20
+    ADXL366_DATA_RATE_0_10       0.10
 */
-  myAcc.setDataRate(ADXL345_DATA_RATE_200);
+  myAcc.setDataRate(ADXL366_DATA_RATE_200);
   Serial.print("Data rate: ");
   Serial.print(myAcc.getDataRateAsString());
 
 /* Choose the measurement range
-    ADXL345_RANGE_16G    16g     
-    ADXL345_RANGE_8G      8g     
-    ADXL345_RANGE_4G      4g   
-    ADXL345_RANGE_2G      2g
+    ADXL366_RANGE_16G    16g     
+    ADXL366_RANGE_8G      8g     
+    ADXL366_RANGE_4G      4g   
+    ADXL366_RANGE_2G      2g
 */ 
-  myAcc.setRange(ADXL345_RANGE_8G);
+  myAcc.setRange(ADXL366_RANGE_8G);
   Serial.print("  /  g-Range: ");
   Serial.println(myAcc.getRangeAsString());
   Serial.println();
@@ -74,14 +74,14 @@ void setup() {
  
 /* The following four parameters have to be set for tap application (single and double):
     1. Axes, that are considered:
-        ADXL345_000  -  no axis (which makes no sense)
-        ADXL345_00Z  -  z 
-        ADXL345_0Y0  -  y
-        ADXL345_0YZ  -  y,z
-        ADXL345_X00  -  x
-        ADXL345_X0Z  -  x,z
-        ADXL345_XY0  -  x,y
-        ADXL345_XYZ  -  all axes
+        ADXL366_000  -  no axis (which makes no sense)
+        ADXL366_00Z  -  z 
+        ADXL366_0Y0  -  y
+        ADXL366_0YZ  -  y,z
+        ADXL366_X00  -  x
+        ADXL366_X0Z  -  x,z
+        ADXL366_XY0  -  x,y
+        ADXL366_XYZ  -  all axes
     2. Threshold in g
         It is recommended to not choose the value to low. 3g is a good starting point. 
     3. Duration in milliseconds (max 159 ms): 
@@ -92,7 +92,7 @@ void setup() {
     4. Latency time in milliseconds (maximum: 318 ms): minimum time before the next tap can be detected.
         Starts at the end of duration or when the interrupt was triggered. Should be greater than 20 ms.  
 */
-  myAcc.setGeneralTapParameters(ADXL345_XY0, 3.0, 30, 100.0);
+  myAcc.setGeneralTapParameters(ADXL366_XY0, 3.0, 30, 100.0);
 
 /* For double tap detection additional parameters have to be set:
     1. Suppress bit: if the bit is set, a spike over the threshold during the latency time will invalidate
@@ -106,22 +106,22 @@ void setup() {
 
 /* You can choose the following interrupts:
      Variable name:             Triggered, if:
-    ADXL345_OVERRUN      -   new data replaces unread data
-    ADXL345_WATERMARK    -   the number of samples in FIFO equals the number defined in FIFO_CTL
-    ADXL345_FREEFALL     -   acceleration values of all axes are below the threshold defined in THRESH_FF 
-    ADXL345_INACTIVITY   -   acc. value of all included axes are < THRESH_INACT for period > TIME_INACT
-    ADXL345_ACTIVITY     -   acc. value of included axes are > THRESH_ACT
-    ADXL345_DOUBLE_TAP   -   double tap detected on one incl. axis and various defined conditions are met
-    ADXL345_SINGLE_TAP   -   single tap detected on one incl. axis and various defined conditions are met
-    ADXL345_DATA_READY   -   new data available
+    ADXL366_OVERRUN      -   new data replaces unread data
+    ADXL366_WATERMARK    -   the number of samples in FIFO equals the number defined in FIFO_CTL
+    ADXL366_FREEFALL     -   acceleration values of all axes are below the threshold defined in THRESH_FF 
+    ADXL366_INACTIVITY   -   acc. value of all included axes are < THRESH_INACT for period > TIME_INACT
+    ADXL366_ACTIVITY     -   acc. value of included axes are > THRESH_ACT
+    ADXL366_DOUBLE_TAP   -   double tap detected on one incl. axis and various defined conditions are met
+    ADXL366_SINGLE_TAP   -   single tap detected on one incl. axis and various defined conditions are met
+    ADXL366_DATA_READY   -   new data available
 
     Assign the interrupts to INT1 (INT_PIN_1) or INT2 (INT_PIN_2). Data ready, watermark and overrun are 
     always enabled. You can only change the assignment of these which is INT1 by default.
 
     You can delete interrupts with deleteInterrupt(type);
 */ 
-  myAcc.setInterrupt(ADXL345_SINGLE_TAP, INT_PIN_2);
-  myAcc.setInterrupt(ADXL345_DOUBLE_TAP, INT_PIN_2);
+  myAcc.setInterrupt(ADXL366_SINGLE_TAP, INT_PIN_2);
+  myAcc.setInterrupt(ADXL366_DOUBLE_TAP, INT_PIN_2);
   myAcc.readAndClearInterrupts();
 }
 
@@ -149,11 +149,11 @@ void loop() {
       //Serial.println(actTapSource, BIN);
     String axes = myAcc.getActTapStatusAsString();
     byte intSource = myAcc.readAndClearInterrupts();
-    if(myAcc.checkInterrupt(intSource, ADXL345_SINGLE_TAP)){
+    if(myAcc.checkInterrupt(intSource, ADXL366_SINGLE_TAP)){
       Serial.print("TAP at: ");
       Serial.println(axes);
     }
-    if(myAcc.checkInterrupt(intSource, ADXL345_DOUBLE_TAP)){
+    if(myAcc.checkInterrupt(intSource, ADXL366_DOUBLE_TAP)){
       Serial.print("DOUBLE TAP at: ");
       Serial.println(axes);
     }

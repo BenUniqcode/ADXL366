@@ -1,5 +1,5 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL343_WE library
+* Example sketch for the ADXL366_WE / ADXL367_WE library
 *
 * This sketch shows how use two devices with two SPI interfaces (e.g. ESP32). 
 *  
@@ -9,7 +9,7 @@
 * 
 ***************************************************************************/
 
-#include<ADXL345_WE.h>
+#include<ADXL366_WE.h>
 #include<SPI.h>
 #define CS_PIN_1 5
 #define CS_PIN_2 15 
@@ -17,8 +17,8 @@ bool spi = true;    // flag indicating that SPI shall be used
 
 SPIClass SPI_2(HSPI); // create SPI_2 object
 
-ADXL345_WE myAcc_1 = ADXL345_WE(&SPI, CS_PIN_1, spi);
-ADXL345_WE myAcc_2 = ADXL345_WE(&SPI_2, CS_PIN_2, spi);
+ADXL366_WE myAcc_1 = ADXL366_WE(&SPI, CS_PIN_1, spi);
+ADXL366_WE myAcc_2 = ADXL366_WE(&SPI_2, CS_PIN_2, spi);
 
 void setup(){
   Serial.begin(115200);
@@ -26,44 +26,44 @@ void setup(){
 //   myAcc_1.setSPIClockSpeed(5000000);
 //   myAcc_2.setSPIClockSpeed(5000000); 
   
-  Serial.println("ADXL345_Sketch - Basic Data");
+  Serial.println("ADXL366_Sketch - Basic Data");
   if(!myAcc_1.init()){
-    Serial.println("ADXL345 1 not connected!");
+    Serial.println("ADXL366 1 not connected!");
   }
   else{
-    Serial.println("ADXL345 1: success!!");
+    Serial.println("ADXL366 1: success!!");
   }
   delay(100);
 
   if(!myAcc_2.init()){
-    Serial.println("ADXL345 2 not connected!");
+    Serial.println("ADXL366 2 not connected!");
   }
   else{
-    Serial.println("ADXL345 2: success!!");
+    Serial.println("ADXL366 2: success!!");
 }
   delay(100);
 
 
    
 /* Choose the data rate         Hz
-    ADXL345_DATA_RATE_3200    3200
-    ADXL345_DATA_RATE_1600    1600
-    ADXL345_DATA_RATE_800      800
-    ADXL345_DATA_RATE_400      400
-    ADXL345_DATA_RATE_200      200
-    ADXL345_DATA_RATE_100      100
-    ADXL345_DATA_RATE_50        50
-    ADXL345_DATA_RATE_25        25
-    ADXL345_DATA_RATE_12_5      12.5  
-    ADXL345_DATA_RATE_6_25       6.25
-    ADXL345_DATA_RATE_3_13       3.13
-    ADXL345_DATA_RATE_1_56       1.56
-    ADXL345_DATA_RATE_0_78       0.78
-    ADXL345_DATA_RATE_0_39       0.39
-    ADXL345_DATA_RATE_0_20       0.20
-    ADXL345_DATA_RATE_0_10       0.10
+    ADXL366_DATA_RATE_3200    3200
+    ADXL366_DATA_RATE_1600    1600
+    ADXL366_DATA_RATE_800      800
+    ADXL366_DATA_RATE_400      400
+    ADXL366_DATA_RATE_200      200
+    ADXL366_DATA_RATE_100      100
+    ADXL366_DATA_RATE_50        50
+    ADXL366_DATA_RATE_25        25
+    ADXL366_DATA_RATE_12_5      12.5  
+    ADXL366_DATA_RATE_6_25       6.25
+    ADXL366_DATA_RATE_3_13       3.13
+    ADXL366_DATA_RATE_1_56       1.56
+    ADXL366_DATA_RATE_0_78       0.78
+    ADXL366_DATA_RATE_0_39       0.39
+    ADXL366_DATA_RATE_0_20       0.20
+    ADXL366_DATA_RATE_0_10       0.10
 */
-  /*myAcc_1.setDataRate(ADXL345_DATA_RATE_12_5);
+  /*myAcc_1.setDataRate(ADXL366_DATA_RATE_12_5);
   delay(100);
   Serial.print("Data rate: ");
   Serial.print(myAcc_1.getDataRateAsString());*/
@@ -75,12 +75,12 @@ void setup(){
   // myAcc.setFullRes(false);
 
 /* Choose the measurement range
-    ADXL345_RANGE_16G    16g     
-    ADXL345_RANGE_8G      8g     
-    ADXL345_RANGE_4G      4g   
-    ADXL345_RANGE_2G      2g
+    ADXL366_RANGE_16G    16g     
+    ADXL366_RANGE_8G      8g     
+    ADXL366_RANGE_4G      4g   
+    ADXL366_RANGE_2G      2g
 */ 
-  /*myAcc_1.setRange(ADXL345_RANGE_4G);
+  /*myAcc_1.setRange(ADXL366_RANGE_4G);
   Serial.print("  /  g-Range: ");
   Serial.println(myAcc_1.getRangeAsString());
   Serial.println();*/

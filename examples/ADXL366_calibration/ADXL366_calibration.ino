@@ -1,7 +1,7 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL343_WE library
+* Example sketch for the ADXL366_WE / ADXL367_WE library
 *
-* This sketch shows how to calibrate the ADXL345 
+* This sketch shows how to calibrate the ADXL366 
 * It does not use the internal offset registers.
 *  
 * Further information can be found on:
@@ -10,24 +10,24 @@
 * 
 ***************************************************************************/
 #include<Wire.h>
-#include<ADXL345_WE.h>
-#define ADXL345_I2CADDR 0x53  // 0x1D if SDO = HIGH
+#include<ADXL366_WE.h>
+#define ADXL366_I2CADDR 0x53  // 0x1D if SDO = HIGH
 
-/* There are several ways to create your ADXL345 object:
- * ADXL345_WE myAcc = ADXL345_WE()                -> uses Wire / I2C Address = 0x53
- * ADXL345_WE myAcc = ADXL345_WE(ADXL345_I2CADDR) -> uses Wire / ADXL345_I2CADDR
- * ADXL345_WE myAcc = ADXL345_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL345_I2CADDR
- * ADXL345_WE myAcc = ADXL345_WE(&wire2, ADXL345_I2CADDR) -> all together
+/* There are several ways to create your ADXL366 object:
+ * ADXL366_WE myAcc = ADXL366_WE()                -> uses Wire / I2C Address = 0x53
+ * ADXL366_WE myAcc = ADXL366_WE(ADXL366_I2CADDR) -> uses Wire / ADXL366_I2CADDR
+ * ADXL366_WE myAcc = ADXL366_WE(&wire2)          -> uses the TwoWire object wire2 / ADXL366_I2CADDR
+ * ADXL366_WE myAcc = ADXL366_WE(&wire2, ADXL366_I2CADDR) -> all together
  */
-ADXL345_WE myAcc = ADXL345_WE(ADXL345_I2CADDR);
+ADXL366_WE myAcc = ADXL366_WE(ADXL366_I2CADDR);
 
 void setup(){
   Wire.begin();
   Serial.begin(115200);
-  Serial.println(F("ADXL345_Sketch - Calibration"));
+  Serial.println(F("ADXL366_Sketch - Calibration"));
   Serial.println();
   if(!myAcc.init()){
-    Serial.println(F("ADXL345 not connected!"));
+    Serial.println(F("ADXL366 not connected!"));
   }
   Serial.println(F("Calibration procedure:"));
   Serial.println(F(" - stay in full resolution"));
@@ -37,7 +37,7 @@ void setup(){
   Serial.println(F(" - deviations of one or two units don't matter much"));
   Serial.println(F(" - the calibration changes the slope of g vs raw and assumes zero is (min+max)/2 "));
   Serial.println(F(" - write down the six values "));
-  Serial.println(F(" - you can try the calibration values in ADXL345_angles_tilt_orientation.ino example sketch"));
+  Serial.println(F(" - you can try the calibration values in ADXL366_angles_tilt_orientation.ino example sketch"));
   Serial.println(F(" - ready to go? Then type in any key and send. "));
   while(!Serial.available());
   Serial.read();

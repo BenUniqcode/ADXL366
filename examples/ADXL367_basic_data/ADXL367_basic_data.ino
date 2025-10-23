@@ -1,5 +1,5 @@
 /***************************************************************************
-* Example sketch for the ADXL345_WE / ADXL367 library
+* Example sketch for the ADXL366_WE / ADXL367 library
 *
 * This sketch shows how to get the basic raw and g values from the ADXL367. 
 *  
@@ -9,8 +9,8 @@
 * 
 ***************************************************************************/
 
-#include<Wire.h>
-#include<ADXL367_WE.h>
+#include <Wire.h>
+#include <ADXL367_WE.h>
 #define ADXL367_I2CADDR 0x53 // 0x1D if SDO = HIGH
 
 /* There are several ways to create your ADXL367 object:
@@ -53,14 +53,7 @@ void setup(){
   Serial.print("Data rate: ");
   Serial.print(myAcc.getDataRateAsString());
 
-/* In full resolution the size of the raw values depend on the range:
-    2g = 10 bit; 4g = 11 bit; 8g = 12 bit; 16g =13 bit;
-    uncomment to change to 10 bit for all ranges. 
- */
-  // myAcc.setFullRes(false);
-
 /* Choose the measurement range
-    ADXL367_RANGE_16G    16g     
     ADXL367_RANGE_8G      8g     
     ADXL367_RANGE_4G      4g   
     ADXL367_RANGE_2G      2g
@@ -70,15 +63,12 @@ void setup(){
   Serial.println(myAcc.getRangeAsString());
   Serial.println();
 
-/* Uncomment to enable Low Power Mode. It saves power but slightly
-    increases noise. LowPower only affetcs Data Rates 12.5 Hz to 400 Hz.
-*/
-  // myAcc.setLowPower(true);
 }
 
-/* The LSB of the Data registers is 3.9 mg (milli-g, not milligramm).
-    This value is used calculating g from raw. However, this is an ideal
-    value which you might want to calibrate. 
+/* The LSB of the Data registers depends on the range:
+  Range +/-2g = LSB 0.25mg
+  Range +/-4g = LSB 0.5mg
+  Range +/-8g = LSB 1.0mg
 */
 
 void loop() {

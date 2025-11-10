@@ -400,9 +400,11 @@ class ADXL366_WE
 
         /* FIFO */
         
-        // FIFO parameters have changed a lot. I think it makes more sense to set them all here
-        // rather than having a separate setFifoMode()
+        // FIFO parameters have changed a lot. It usually makes sense to set all the params at once
+        // rather than requring setFifoMode() to be separate, however it's still useful to be able
+        // to change the FIFO mode separately so I've kept the separate function too.
         bool setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes, adxl366_fifoExtra extra, uint16_t samples);
+        bool setFifoMode(adxl366_fifoMode mode);
         uint8_t getFifoStatus();
         bool resetTrigger();
        

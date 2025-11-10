@@ -622,6 +622,18 @@ bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes,
     return true;
 }
 
+bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
+{
+    if (!readRegister8(ADXL366_FIFO_CONTROL, &regVal)) {
+        return false;
+    }
+    // Bits 1:0 = mode
+    regVal &= 0x03;
+    regVal |= mode;
+    writeRegister(ADXL366_FIFO_CONTROL, regVal);
+    return true;
+}
+
 uint8_t ADXL366_WE::getFifoStatus(){
     if (!readRegister8(ADXL366_FIFO_STATUS, &regVal)) {
         return 0; // Not ideal

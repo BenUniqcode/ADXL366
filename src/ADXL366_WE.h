@@ -198,7 +198,7 @@ typedef enum ADXL366_ORIENTATION {
  */
 
 
-// Bits in INTMAP[12]_LOWER and STATUS (and STATUS_COPY) registers
+// Bits in INTMAP[12]_LOWER and _UPPER and STATUS/2/3 (and STATUS_COPY) registers
 typedef enum ADXL366_INT {
     ADXL366_INT_DATA_READY,
     ADXL366_INT_FIFO_READY,
@@ -207,6 +207,16 @@ typedef enum ADXL366_INT {
     ADXL366_INT_ACT,
     ADXL366_INT_INACT,
     ADXL366_INT_AWAKE,
+    ADXL366_INT_ACTIVE_LOW,
+    ADXL366_INT_TAP_ONE,
+    ADXL366_INT_TAP_TWO,
+    ADXL366_INT_TEMP_ADC_LOW,
+    ADXL366_INT_TEMP_ADC_HI,
+    ADXL366_INT_KPALV_TIMER,
+    ADXL366_INT_RESERVED,
+    ADXL366_INT_ERR_USER_REGS,
+    ADXL366_INT_ERR_FUSE,
+
     ADXL367_INT_DATA_READY = ADXL366_INT_DATA_READY,
     ADXL367_INT_FIFO_READY = ADXL366_INT_FIFO_READY,
     ADXL367_INT_FIFO_WATERMARK = ADXL366_INT_FIFO_WATERMARK,
@@ -214,6 +224,15 @@ typedef enum ADXL366_INT {
     ADXL367_INT_ACT = ADXL366_INT_ACT,
     ADXL367_INT_INACT = ADXL366_INT_INACT,
     ADXL367_INT_AWAKE = ADXL366_INT_AWAKE
+    ADXL367_INT_ACTIVE_LOW = ADXL366_INT_ACTIVE_LOW,
+    ADXL367_INT_TAP_ONE = ADXL366_INT_TAP_ONE,
+    ADXL367_INT_TAP_TWO = ADXL366_INT_TAP_TWO,
+    ADXL367_INT_TEMP_ADC_LOW = ADXL366_INT_TEMP_ADC_LOW,
+    ADXL367_INT_TEMP_ADC_HI = ADXL366_INT_TEMP_ADC_HI,
+    ADXL367_INT_KPALV_TIMER = ADXL366_INT_KPALV_TIMER,
+    ADXL367_INT_RESERVED = ADXL366_INT_RESERVED,
+    ADXL367_INT_ERR_USER_REGS = ADXL366_INT_ERR_USER_REGS,
+    ADXL367_INT_ERR_FUSE = ADXL366_INT_ERR_FUSE,
 } adxl366_int;
 
 // Bits 0..2 of Axis Mask - set bits mean "ignore this axis"; our names mean the opposite:
@@ -353,7 +372,7 @@ class ADXL366_WE
         /* Interrupts */
         
         bool setInterrupt(adxl366_int type, uint8_t pin);
-        bool setInterruptPolarity(uint8_t pol);
+        bool setInterruptPolarity(uint8_t pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
         bool deleteInterrupt(adxl366_int type);
         uint8_t readAndClearInterrupts();
         bool checkInterrupt(uint8_t source, adxl366_int type);

@@ -421,35 +421,41 @@ bool ADXL366_WE::isLowPower(){
             
 /************ Interrupts ************/
 
-
-bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin){
-    if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
+bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin) {
+    adxl366_register reg;
+    if (pin == INT_PIN_1) {
+        reg = (type > 7) ? ADXL366_INTMAP1_UPPER : ADXL366_INTMAP1_LOWER;
+    } else {
+        reg = (type > 7) ? ADXL366_INTMAP2_UPPER : ADXL366_INTMAP2_LOWER;
+    }
+    if (!readRegister8(reg, &regVal)) {
         return false;
     }
+    // As we've now selected the correct INTMAP "bank", clear the bank select bit of the type
+    // so it's just the bit number within this bank.
+    type &= ~0x80;
+    // Enable the interrupt
     regVal |= (1<<type);
-    writeRegister(ADXL366_INT_ENABLE, regVal);
-    if (!readRegister8(ADXL366_INT_MAP, &regVal)) {
-        return false;
-    }
-    if(pin == INT_PIN_1){
-        regVal &= ~(1<<type);
-    }
-    else {
-        regVal |= (1<<type);
-    }
-    writeRegister(ADXL366_INT_MAP, regVal);
+    writeRegister(reg, regVal);
     return true;
 }
 
-bool ADXL366_WE::setInterruptPolarity(uint8_t pol){
-    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
-        return false;
+bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
+    if(!pin || pin == INT_PIN_1){
+        if (!readRegister8(ADXL366_INTMAP1_LOWER, &regVal)) {
+            return false;
+        }
+        regVal &= 0x80;
+        regVal |= (pol << 7);
+        writeRegister(ADXL366_INTMAP1_LOWER, regVal);
     }
-    if(pol == ADXL366_ACT_HIGH){
-        regVal &= ~(0b00100000);
-    }
-    else if(pol == ADXL366_ACT_LOW){
-        regVal |= 0b00100000;
+    if(!pin || pin == INT_PIN_2) {
+        if (!readRegister8(ADXL366_INTMAP2_LOWER, &regVal)) {
+            return false;
+        }
+        regVal &= 0x80;
+        regVal |= (pol << 7);
+        writeRegister(ADXL366_INTMAP2_LOWER, regVal);
     }
     writeRegister(ADXL366_DATA_FORMAT, regVal);
     return true;

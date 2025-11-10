@@ -553,8 +553,8 @@ bool ADXL366_WE::setAxisMask(adxl366_axisMask axisMask) {
     if (!readRegister8(ADXL366_AXIS_MASK, &regVal)) {
         return false;
     }
-    regval &= ~0x07;
-    regval |= axisMask;
+    regVal &= ~0x07;
+    regVal |= axisMask;
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
@@ -641,12 +641,12 @@ bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
     return true;
 }
 
-uint8_t ADXL366_WE::getFifoStatus(){
-    if (!readRegister8(ADXL366_FIFO_STATUS, &regVal)) {
-        return 0; // Not ideal
-    }
-    return regVal;
-}
+// uint8_t ADXL366_WE::getFifoStatus(){
+//     if (!readRegister8(ADXL366_FIFO_STATUS, &regVal)) {
+//         return 0; // Not ideal
+//     }
+//     return regVal;
+// }
 
 bool ADXL366_WE::resetTrigger(){
     return setFifoMode(ADXL366_BYPASS) && setFifoMode(ADXL366_TRIGGER);

@@ -505,7 +505,7 @@ void ADXL366_WE::setFreeFallThresholds(float ffg, float fft){
     writeRegister(ADXL366_TIME_FF, regVal);
 }
 
-bool ADXL366_WE::setActivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold){
+bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
@@ -522,7 +522,7 @@ bool ADXL366_WE::setActivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet 
     return true;
 }
 
-bool ADXL366_WE::setInactivityParameters(adxl345_dcAcMode mode, adxl345_actTapSet axes, float threshold, uint8_t inactTime){
+bool ADXL366_WE::setInactivityParameters(bool useReferenced, float threshold, uint8_t inactTime) {
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
@@ -536,6 +536,26 @@ bool ADXL366_WE::setInactivityParameters(adxl345_dcAcMode mode, adxl345_actTapSe
     regVal &= 0xF0;
     regVal |= static_cast<uint8_t>(mode) + static_cast<uint16_t>(axes);
     writeRegister(ADXL366_ACT_INACT_CTL, regVal);
+    return true;
+}
+
+bool ADXL366_WE::setAxisMask(adxl366_axisMask axisMask) {
+    if (!readRegister8(ADXL366_AXIS_MASK, &regVal)) {
+        return false;
+    }
+    regval &= ~0x07;
+    regval |= axisMask;
+    writeRegister(ADXL366_AXIS_MASK, regVal);
+    return true;
+}
+
+bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
+    if (!readRegister8(ADXL366_AXIS_MASK, &regVal)) {
+        return false;
+    }
+    regval &= ~0x20;
+    regval |= tapAxis;
+    writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
 
@@ -647,7 +667,7 @@ bool ADXL366_WE::resetTrigger(){
     private functions
 *************************************************/
 
-void ADXL366_WE::writeRegister(uint8_t reg, uint8_t val){
+void ADXL366_WE::writeRegister(adxl366_register reg, uint8_t val){
     if(!useSPI){
         _wire->beginTransmission(i2cAddress);
         _wire->write(reg);
@@ -665,7 +685,7 @@ void ADXL366_WE::writeRegister(uint8_t reg, uint8_t val){
     }
 }
   
-bool ADXL366_WE::readRegister8(uint8_t reg, uint8_t *val){
+bool ADXL366_WE::readRegister8(adxl366_register reg, uint8_t *val){
     if(!useSPI){    
         bool ok = true;
         _wire->beginTransmission(i2cAddress);
@@ -693,7 +713,7 @@ bool ADXL366_WE::readRegister8(uint8_t reg, uint8_t *val){
     }
 }
 
-bool ADXL366_WE::readMultipleRegisters(uint8_t reg, uint8_t count, uint8_t *buf){
+bool ADXL366_WE::readMultipleRegisters(adxl366_register reg, uint8_t count, uint8_t *buf){
     if(!useSPI){
         bool ok = true;
         _wire->beginTransmission(i2cAddress);

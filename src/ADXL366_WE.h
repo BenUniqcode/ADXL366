@@ -345,6 +345,7 @@ class ADXL366_WE
         /* x,y,z results */
             
         bool getRawValues(xyzFloat *rawVal);
+        bool getRawValues8(xyzFloat *rawVal); // 8-bit faster read
         bool getCorrectedRawValues(xyzFloat *rawVal);
         bool getGValues(xyzFloat *gVal);
             

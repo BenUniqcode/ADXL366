@@ -514,7 +514,7 @@ bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL366_THRESH_ACT, regVal);
+    writeRegister(ADXL366_THRESH_ACT_H, regVal);
 
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;

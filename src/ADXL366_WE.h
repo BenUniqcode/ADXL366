@@ -391,7 +391,7 @@ class ADXL366_WE
         // mode - but was always called "referenced"/"absolute", has also changed to
         // a simple bool, because how that's enabled is also different.
         bool setActivityParameters(bool useReferenced, float threshold);
-        bool setInactivityParameters(bool useReferenced, float threshold, uint8_t inactTime);
+        bool setInactivityParameters(bool useReferenced, float threshold, uint16_t inactTime); // inactTime type changed
         bool setGeneralTapParameters(float threshold, float duration, float latent);
         bool setAxisMask(adxl366_axisMask axisMask);
         bool setTapAxis(adxl366_tapAxis tapAxis);

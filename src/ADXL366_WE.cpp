@@ -563,8 +563,8 @@ bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
     if (!readRegister8(ADXL366_AXIS_MASK, &regVal)) {
         return false;
     }
-    regval &= ~0x30;
-    regval |= tapAxis;
+    regVal &= ~0x30;
+    regVal |= tapAxis;
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }

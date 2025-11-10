@@ -684,11 +684,10 @@ bool ADXL366_WE::readRegister8(adxl366_register reg, uint8_t *val){
         return false;
     }
     else{
-        reg |= 0x80;
         _spi->beginTransaction(mySPISettings);
         digitalWrite(csPin, LOW);
         delayMicroseconds(5);
-        _spi->transfer(reg); 
+        _spi->transfer(reg | 0x80); 
         *val = _spi->transfer(0x00);
         digitalWrite(csPin, HIGH);
         _spi->endTransaction();
@@ -714,12 +713,10 @@ bool ADXL366_WE::readMultipleRegisters(adxl366_register reg, uint8_t count, uint
         return false;
     }
     else{
-        reg = reg | 0x80;
-        reg = reg | 0x40;
         _spi->beginTransaction(mySPISettings);
         digitalWrite(csPin, LOW);
         delayMicroseconds(5);
-        _spi->transfer(reg); 
+        _spi->transfer(reg | 0xc0); 
         for(int i=0; i<count; i++){
             buf[i] = _spi->transfer(0x00);
         }

@@ -383,7 +383,7 @@ class ADXL366_WE
         
         // FIFO parameters have changed a lot. I think it makes more sense to set them all here
         // rather than having a separate setFifoMode()
-        bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes, adxl366_fifoExtra extra, uint16_t samples);
+        bool setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes, adxl366_fifoExtra extra, uint16_t samples);
         uint8_t getFifoStatus();
         bool resetTrigger();
        

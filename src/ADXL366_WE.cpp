@@ -32,20 +32,25 @@ bool ADXL366_WE::init(bool startMeasuring){
         digitalWrite(csPin, HIGH);
     }
 
-    // Check that the device is present and communicating, by reading the DEVICE_ID register
-    uint8_t val;
-    bool ok = readRegister8(ADXL366_DEVID, &val);
-    if (!ok || val != ADXL366_DEVID_VALUE) {
-        return false;
+    // Check that the device is present and communicating, by reading the first 4 registers
+    uint8_t devid[4];
+    bool ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
+
+    if (!ok || devid[0] != 0xad || devid[1] != 0x1d || devid[2] != 0xf7 || devid[3] != 0x05) {
+        // If we didn't get a response, try a soft reset
+        Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - trying soft reset\n", devid[0], devid[1], devid[2], devid[3]);
+        // Trigger a soft reset and wait 20ms
+        writeRegister(ADXL366_SOFT_RESET, 0x52);
+        delay(20);
+        // Try the read again
+        ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
+        if (!ok || devid[0] != 0xad || devid[1] != 0x1d || devid[2] != 0xf7 || devid[3] != 0x05) {
+            Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - giving up\n", devid[0], devid[1], devid[2], devid[3]);
+            return false;
+        }
     }
 
-    // Enable full-resolution mode
-    writeRegister(ADXL366_DATA_FORMAT, (1 << ADXL366_FULL_RES));
     // Check that writing to registers on the device is succeeding
-    ok = readRegister8(ADXL366_DATA_FORMAT, &val);
-    if(!ok || val != (1 << ADXL366_FULL_RES)){
-	    return false;
-    }
 
     // Start measure mode unless caller asked not to
     if (startMeasuring) {
@@ -553,7 +558,7 @@ bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
     if (!readRegister8(ADXL366_AXIS_MASK, &regVal)) {
         return false;
     }
-    regval &= ~0x20;
+    regval &= ~0x30;
     regval |= tapAxis;
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;

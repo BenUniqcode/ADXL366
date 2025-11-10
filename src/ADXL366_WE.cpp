@@ -15,21 +15,31 @@ bool ADXL366_WE::init(bool startMeasuring){
             _spi->begin();
         }
 #ifdef ESP32
-        else{
+        else {
             _spi->begin(sckPin, misoPin, mosiPin, csPin);
         }
 #endif
 #ifdef ARDUINO_ARCH_STM32
-    else {
-       _spi->setMISO(misoPin);
-       _spi->setMOSI(mosiPin);
-       _spi->setSCLK(sckPin);
-       _spi->begin();
-    }
+        else {
+            _spi->setMISO(misoPin);
+            _spi->setMOSI(mosiPin);
+            _spi->setSCLK(sckPin);
+            _spi->begin();
+        }
 #endif
         setSPIClockSpeed(spiClock);
         pinMode(csPin, OUTPUT);
         digitalWrite(csPin, HIGH);
+    } else {
+        // Using I2C
+        // If I2C is not configured for High Speed, clear the I2C_HS bit in FILTER_CTL
+        // As the ADXL366 boots up in High Speed mode, we can't rely on being able to read the
+        // existing value. But we are resetting anyway.
+        uint32_t i2cClock = _wire->getClock();
+        if (i2cClock < 400000L) {
+            Serial.printf("I2C clock is %lu, disabling High Speed mode on ADXL\n", i2cClock);
+            writeRegister(ADXL366_FILTER_CTL, 0x20);
+        }
     }
 
     // Check that the device is present and communicating, by reading the first 4 registers
@@ -40,7 +50,7 @@ bool ADXL366_WE::init(bool startMeasuring){
         // If we didn't get a response, try a soft reset
         Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - trying soft reset\n", devid[0], devid[1], devid[2], devid[3]);
         // Trigger a soft reset and wait 20ms
-        writeRegister(ADXL366_SOFT_RESET, 0x52);
+        writeRegister(ADXL366_SOFT_RESET, SOFT_RESET_VAL);
         delay(20);
         // Try the read again
         ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
@@ -73,21 +83,23 @@ void ADXL366_WE::setCorrFactors(float xMin, float xMax, float yMin, float yMax, 
     offsetVal.z = (zMax + zMin) * 0.5;
 }
 
-bool ADXL366_WE::setDataRate(adxl345_dataRate rate){
-    if (!readRegister8(ADXL366_BW_RATE, &regVal) || rate == ADXL366_DATA_RATE_ERROR) {
+bool ADXL366_WE::setDataRate(adxl366_dataRate rate){
+    // ODR = bottom 3 bits of FILTER_CTL
+    if (!readRegister8(ADXL366_FILTER_CTL, &regVal) || rate == ADXL366_DATA_RATE_ERROR) {
         return false;
     }
-    regVal &= 0xF0;
+    regVal &= 0xF8;
     regVal |= rate;
-    writeRegister(ADXL366_BW_RATE, regVal);
+    writeRegister(ADXL366_FILTER_CTL, regVal);
     return true;
 }
     
-adxl345_dataRate ADXL366_WE::getDataRate(){
-    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
+adxl366_dataRate ADXL366_WE::getDataRate(){
+    // ODR = bottom 3 bits of FILTER_CTL
+    if (!readRegister8(ADXL366_FILTER_CTL, &regVal)) {
         return ADXL366_DATA_RATE_ERROR;
     }
-    return (adxl345_dataRate)(regVal & 0x0F);
+    return static_cast<adxl366_dataRate>(regVal & 0x07);
 }
 
 
@@ -95,91 +107,57 @@ String ADXL366_WE::getDataRateAsString(){
     adxl345_dataRate dataRate = getDataRate();    
     switch(dataRate) {
         case ADXL366_DATA_RATE_ERROR: return(F("ERROR")); break;
-        case ADXL366_DATA_RATE_3200: return(F("3200 Hz")); break;
-        case ADXL366_DATA_RATE_1600: return(F("1600 Hz")); break;
-        case ADXL366_DATA_RATE_800:  return(F("800 Hz"));  break;
         case ADXL366_DATA_RATE_400:  return(F("400 Hz"));  break;
         case ADXL366_DATA_RATE_200:  return(F("200 Hz"));  break;
         case ADXL366_DATA_RATE_100:  return(F("100 Hz"));  break;
         case ADXL366_DATA_RATE_50:   return(F("50 Hz"));   break;
         case ADXL366_DATA_RATE_25:   return(F("25 Hz"));   break;
         case ADXL366_DATA_RATE_12_5: return(F("12.5 Hz")); break;
-        case ADXL366_DATA_RATE_6_25: return(F("6.25 Hz")); break;
-        case ADXL366_DATA_RATE_3_13: return(F("3.13 Hz")); break;
-        case ADXL366_DATA_RATE_1_56: return(F("1.56 Hz")); break;
-        case ADXL366_DATA_RATE_0_78: return(F("0.78 Hz")); break;
-        case ADXL366_DATA_RATE_0_39: return(F("0.39 Hz")); break;
-        case ADXL366_DATA_RATE_0_20: return(F("0.20 Hz")); break;
-        case ADXL366_DATA_RATE_0_10: return(F("0.10 Hz")); break;
         default: return(F("unknown"));
     }
 }
 
-bool ADXL366_WE::setRange(adxl345_range range){
-    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal) || range == ADXL366_RANGE_ERROR) {
+bool ADXL366_WE::setRange(adxl366_range range){
+    if (!readRegister8(ADXL366_FILTER_CTL, &regVal) || range == ADXL366_RANGE_ERROR) {
         return false;
     }
-    if(adxl345_lowRes){
-        switch(range){
-            case ADXL366_RANGE_ERROR: return false; break; // Already handled, but avoids compiler warning
-            case ADXL366_RANGE_2G:  rangeFactor = 1.0;  break;
-            case ADXL366_RANGE_4G:  rangeFactor = 2.0;  break;
-            case ADXL366_RANGE_8G:  rangeFactor = 4.0;  break;
-            case ADXL366_RANGE_16G: rangeFactor = 8.0;  break;  
-        }
+    // The 366 is always 14-bit, so the range factor varies
+    switch(range){
+        case ADXL366_RANGE_ERROR: return false; break; // Already handled, but avoids compiler warning
+        case ADXL366_RANGE_2G:  rangeFactor = 1.0;  break;
+        case ADXL366_RANGE_4G:  rangeFactor = 2.0;  break;
+        case ADXL366_RANGE_8G:  rangeFactor = 4.0;  break;
     }
-    else{
-        rangeFactor = 1.0;
-    }
-    regVal &= 0b11111100;
-    regVal |= range;
-    writeRegister(ADXL366_DATA_FORMAT, regVal);
+    regVal &= 0x3f;
+    regVal |= range << 6;
+    writeRegister(ADXL366_FILTER_CTL, regVal);
     return true;
 }
 
 adxl345_range ADXL366_WE::getRange(){
-    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
+    if (!readRegister8(ADXL366_FILTER_CTL, &regVal)) {
         return ADXL366_RANGE_ERROR;
     }
-    regVal &= 0x03; 
-    return adxl345_range(regVal);
-}
-
-bool ADXL366_WE::setFullRes(bool full){
-    if (!readRegister8(ADXL366_DATA_FORMAT, &regVal)) {
-        return false;
-    }
-    if(full){
-        adxl345_lowRes = false;
-        rangeFactor = 1.0;
-        regVal |= (1<<ADXL366_FULL_RES);
-    }
-    else{
-        adxl345_lowRes = true;
-        regVal &= ~(1<<ADXL366_FULL_RES);
-        if (!setRange(getRange())) {
-            return false;
-        }
-    }
-    writeRegister(ADXL366_DATA_FORMAT, regVal);
-    return true;
+    regVal = regVal >> 6;
+    return static_cast<adxl366_range>(regVal);
 }
 
 String ADXL366_WE::getRangeAsString(){
-    adxl345_range range = getRange();
+    adxl366_range range = getRange();
     switch(range){
         case ADXL366_RANGE_ERROR: return(F("ERROR")); break;
         case ADXL366_RANGE_2G:  return(F("2g"));   break;
         case ADXL366_RANGE_4G:  return(F("4g"));   break;
         case ADXL366_RANGE_8G:  return(F("8g"));   break;
-        case ADXL366_RANGE_16G: return(F("16g"));  break;
         default: return(F("unknown"));
         
     }
 }
 
+// Left for backwards compatibility, but on the 366 it's better to check the subsequent registers;
+// see the check in init()
 uint8_t ADXL366_WE::getDeviceID(){
-    if (readRegister8(ADXL366_DEVID, &regVal)) {
+    if (readRegister8(ADXL366_DEVID_AD, &regVal)) {
         return regVal;
     } else {
         return 0;
@@ -188,14 +166,28 @@ uint8_t ADXL366_WE::getDeviceID(){
 
 /************ x,y,z results ************/
 
-bool ADXL366_WE::getRawValues(xyzFloat *rawVal){
-    uint8_t rawData[6]; 
-    if (!readMultipleRegisters(ADXL366_DATAX0, 6, rawData)) {
+// Get 8-bit raw values for all axes with a single read. If you don't need full precision,
+// this is faster than doing a full 14-bit read.
+bool ADXL366_WE::getRawValues8(xyzFloat *rawVal) {
+    uint8_t rawData[3]; 
+    if (!readMultipleRegisters(ADXL366_XDATA, 3, rawData)) {
         return false;
     }
-    rawVal->x = (static_cast<int16_t>((rawData[1] << 8) | rawData[0])) * 1.0;
-    rawVal->y = (static_cast<int16_t>((rawData[3] << 8) | rawData[2])) * 1.0;
-    rawVal->z = (static_cast<int16_t>((rawData[5] << 8) | rawData[4])) * 1.0;
+    rawVal->x = (rawData[0] << 6) * 1.0;
+    rawVal->y = (rawData[1] << 6) * 1.0;
+    rawVal->z = (rawData[2] << 6) * 1.0;
+    return true;
+
+}
+
+bool ADXL366_WE::getRawValues(xyzFloat *rawVal){
+    uint8_t rawData[6]; 
+    if (!readMultipleRegisters(ADXL366_XDATA_H, 6, rawData)) {
+        return false;
+    }
+    rawVal->x = (static_cast<int16_t>((rawData[0] << 6) | rawData[1])) * 1.0;
+    rawVal->y = (static_cast<int16_t>((rawData[2] << 6) | rawData[3])) * 1.0;
+    rawVal->z = (static_cast<int16_t>((rawData[4] << 6) | rawData[5])) * 1.0;
     return true;
 }
 
@@ -270,8 +262,8 @@ void ADXL366_WE::setAngleOffsets(const xyzFloat aos){
     angleOffsetVal = aos;
 }
 
-adxl345_orientation ADXL366_WE::getOrientation(){
-    adxl345_orientation orientation = FLAT;
+adxl366_orientation ADXL366_WE::getOrientation(){
+    adxl366_orientation orientation = FLAT;
     xyzFloat angleVal;
     if (!getAngles(&angleVal)) {
         return ADXL366_ORIENTATION_ERROR;
@@ -354,7 +346,7 @@ bool ADXL366_WE::setMeasureMode(bool measure){
     return true;
 }
 
-bool ADXL366_WE::setSleep(bool sleep, adxl345_wUpFreq freq){
+bool ADXL366_WE::setSleep(bool sleep, adxl366_wUpFreq freq){
     if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
@@ -380,7 +372,7 @@ bool ADXL366_WE::setSleep(bool sleep, adxl345_wUpFreq freq){
     return true;
 }
     
-bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl345_wUpFreq freq){
+bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl366_wUpFreq freq){
     if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
         return false;
     }
@@ -430,7 +422,7 @@ bool ADXL366_WE::isLowPower(){
 /************ Interrupts ************/
 
 
-bool ADXL366_WE::setInterrupt(adxl345_int type, uint8_t pin){
+bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin){
     if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
         return false;
     }
@@ -463,7 +455,7 @@ bool ADXL366_WE::setInterruptPolarity(uint8_t pol){
     return true;
 }
 
-bool ADXL366_WE::deleteInterrupt(adxl345_int type){
+bool ADXL366_WE::deleteInterrupt(adxl366_int type){
     if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
         return false;
     }
@@ -479,7 +471,7 @@ uint8_t ADXL366_WE::readAndClearInterrupts(){
     return regVal;
 }
 
-bool ADXL366_WE::checkInterrupt(uint8_t source, adxl345_int type){
+bool ADXL366_WE::checkInterrupt(uint8_t source, adxl366_int type){
     return source & (1<<type);
 }
 
@@ -564,95 +556,63 @@ bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
     return true;
 }
 
-bool ADXL366_WE::setGeneralTapParameters(adxl345_actTapSet axes, float threshold, float duration, float latent){
-    if (!readRegister8(ADXL366_TAP_AXES, &regVal)) {
-        return false;
-    }
-    regVal &= 0b11111000;
-    regVal |= static_cast<uint8_t>(axes);
-    writeRegister(ADXL366_TAP_AXES, regVal);
-    
-    regVal = static_cast<uint8_t>(round(threshold / 0.0625));
+// threshold is in g
+// duration and latent are in ms
+bool ADXL366_WE::setGeneralTapParameters(float threshold, float duration, float latent){
+    // TAP_THRESH scale factor is 31.25mg/LSB
+    regVal = static_cast<uint8_t>(round(threshold / 0.03125));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL366_THRESH_TAP,regVal);
+    writeRegister(ADXL366_TAP_THRESH, regVal);
     
+    // TAP_DUR scale factor is 625us/LSB - same as ADXL345
     regVal = static_cast<uint8_t>(round(duration / 0.625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL366_DUR, regVal);
+    writeRegister(ADXL366_TAP_DUR, regVal);
     
+    // TAP_LATENT scale factor is 1.25ms/LSB
     regVal = static_cast<uint8_t>(round(latent / 1.25));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL366_LATENT, regVal);     
+    writeRegister(ADXL366_TAP_LATENT, regVal);     
     return true; 
 }
 
-bool ADXL366_WE::setAdditionalDoubleTapParameters(bool suppress, float window){
-    if (!readRegister8(ADXL366_TAP_AXES, &regVal)) {
-        return false;
-    }
-    if(suppress){
-        regVal |= (1<<ADXL366_SUPPRESS);
-    }
-    else{
-        regVal &= ~(1<<ADXL366_SUPPRESS);
-    }
-    writeRegister(ADXL366_TAP_AXES, regVal);
-    
+bool ADXL366_WE::setDoubleTapWindow(float window){
+    // TAP_WINDOW scale factor is 1.25ms/LSB
     regVal = static_cast<uint8_t>(round(window / 1.25));
-    writeRegister(ADXL366_WINDOW, regVal);
+    writeRegister(ADXL366_TAP_WINDOW, regVal);
     return true;
-}
-
-uint8_t ADXL366_WE::getActTapStatus(){
-    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
-        return 0; // Not ideal
-    }
-    return regVal;
-}
-
-String ADXL366_WE::getActTapStatusAsString(){
-    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
-        return String("ERROR");
-    }
-    String returnStr = "";
-    if(regVal & (1<<ADXL366_TAP_Z)) { returnStr += "TAP-Z "; }
-    if(regVal & (1<<ADXL366_TAP_Y)) { returnStr += "TAP-Y "; }
-    if(regVal & (1<<ADXL366_TAP_X)) { returnStr += "TAP-X "; }
-    if(regVal & (1<<ADXL366_ACT_Z)) { returnStr += "ACT-Z "; }
-    if(regVal & (1<<ADXL366_ACT_Y)) { returnStr += "ACT-Y "; }
-    if(regVal & (1<<ADXL366_ACT_X)) { returnStr += "ACT-X "; }
-    
-    return returnStr;
 }
 
 /************ FIFO ************/
 
-bool ADXL366_WE::setFifoParameters(adxl345_triggerInt intNumber, uint8_t samples){
-    if (!readRegister8(ADXL366_FIFO_CTL, &regVal)) {
+bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes, adxl366_fifoExtra extra, uint16_t samples) {
+    if (samples > 511) {
         return false;
     }
-    regVal &= 0b11000000;
-    regVal |= (samples-1);
-    if(intNumber == ADXL366_TRIGGER_INT_2){
-        regVal |= 0x20;
-    }
-    writeRegister(ADXL366_FIFO_CTL, regVal);
-    return true;
-}
-
-bool ADXL366_WE::setFifoMode(adxl345_fifoMode mode){
-    if (!readRegister8(ADXL366_FIFO_CTL, &regVal)) {
+    if (!readRegister8(ADXL366_FIFO_CONTROL, &regVal)) {
         return false;
     }
-    regVal &= 0b00111111;
-    regVal |= (mode<<6);
-    writeRegister(ADXL366_FIFO_CTL,regVal);
+    // The low byte of samples goes here
+    writeRegister(ADXL366_FIFO_SAMPLES, samples & 0xff);
+    // The rest goes into FIFO_CONTROL
+    // Bit 7 = reserved - keep it, zero the rest
+    regVal &= 0x80;
+    // Bits 6:3 = channels, which comprises:
+    // Bits 6:5 = extra (whether to do temp/ADC conversions as well)
+    regVal |= (extra << 6);
+    // Bits 4:3 = axes
+    regVal |= (axes << 4);
+    // Bit 2 = top bit of samples
+    regVal |= (samples & 0x100) << 2;
+    // Bits 1:0 = mode
+    regVal |= mode;
+    writeRegister(ADXL366_FIFO_CONTROL, regVal);
     return true;
 }
 

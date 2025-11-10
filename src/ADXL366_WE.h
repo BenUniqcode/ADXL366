@@ -257,7 +257,7 @@ typedef enum ADXL366_WAKE_UP_FREQ{
     ADXL367_WUP_FQ_6 = ADXL366_WUP_FQ_6,
     ADXL367_WUP_FQ_3 = ADXL366_WUP_FQ_3,
     ADXL367_WUP_FQ_1_5 = ADXL366_WUP_FQ_1_5
-} adxl345_wUpFreq;
+} adxl366_wUpFreq;
 
 typedef enum ADXL366_FIFO_MODE {
     ADXL366_BYPASS, 
@@ -268,13 +268,26 @@ typedef enum ADXL366_FIFO_MODE {
     ADXL367_FIFO    = ADXL366_FIFO,
     ADXL367_STREAM  = ADXL366_STREAM,
     ADXL367_TRIGGER = ADXL366_TRIGGER
-} adxl345_fifoMode;
+} adxl366_fifoMode;
+
+typedef enum ADXL366_FIFO_AXES {
+    ADXL366_FIFO_XYZ,
+    ADXL366_FIFO_X00,
+    ADXL366_FIFO_0Y0,
+    ADXL366_FIFO_00Z
+} adxl366_fifoAxes;
+
+typedef enum ADXL366_FIFO_EXTRA {
+    ADXL366_FIFO_NO_EXTRA,
+    ADXL366_FIFO_WITH_TEMPERATURE,
+    ADXL366_FIFO_WITH_ADC
+} adxl366_fifoExtra;
 
 typedef enum ADXL366_TRIGGER_INT {
     ADXL366_TRIGGER_INT_1, ADXL366_TRIGGER_INT_2,
     ADXL367_TRIGGER_INT_1 = ADXL366_TRIGGER_INT_1,
     ADXL367_TRIGGER_INT_2 = ADXL366_TRIGGER_INT_2
-} adxl345_triggerInt;
+} adxl366_triggerInt;
 
 class ADXL366_WE
 {
@@ -291,22 +304,22 @@ class ADXL366_WE
             
         ADXL366_WE(SPIClass *s, int cs, bool spi, int mosi = 999, int miso = 999, int sck = 999, int sid = -1)
             :  _spi{s}, csPin{cs}, useSPI{spi}, mosiPin{mosi}, misoPin{miso}, sckPin{sck}, sensorID{sid} {}
+                
+        /* Other */
         
-        /* registers */
+        static constexpr float MILLI_G_PER_LSB {0.25}; // (In the 2G range; multiply by rangeFactor for other ranges)
+        static constexpr float UNITS_PER_G {256.41}; // = 1/0.0039 TODO: I don't quite understand this
         
-
-    
         /* Basic settings */
         
         bool init(bool startMeasuring = true);
         void setSPIClockSpeed(unsigned long clock);
         void setCorrFactors(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
-        bool setDataRate(adxl345_dataRate rate);
-        adxl345_dataRate getDataRate();
+        bool setDataRate(adxl366_dataRate rate);
+        adxl366_dataRate getDataRate();
         String getDataRateAsString();
-        bool setRange(adxl345_range range);
-        adxl345_range getRange();
-        bool setFullRes(bool full);
+        bool setRange(adxl366_range range);
+        adxl366_range getRange();
         String getRangeAsString();
         uint8_t getDeviceID();
         
@@ -323,7 +336,7 @@ class ADXL366_WE
         bool measureAngleOffsets();
         xyzFloat getAngleOffsets();
         void setAngleOffsets(const xyzFloat aos);
-        adxl345_orientation getOrientation();
+        adxl366_orientation getOrientation();
         String getOrientationAsString();
         float getPitch();
         float getRoll();
@@ -331,25 +344,27 @@ class ADXL366_WE
         /* Power, Sleep, Standby */ 
         
         bool setMeasureMode(bool measure);
-        bool setSleep(bool sleep, adxl345_wUpFreq freq = ADXL366_WUP_FQ_UNSET);
-        bool setAutoSleep(bool autoSleep, adxl345_wUpFreq freq = ADXL366_WUP_FQ_UNSET);
+        bool setSleep(bool sleep, adxl366_wUpFreq freq = ADXL366_WUP_FQ_UNSET);
+        bool setAutoSleep(bool autoSleep, adxl366_wUpFreq freq = ADXL366_WUP_FQ_UNSET);
         bool isAsleep();
         bool setLowPower(bool lowpwr);
         bool isLowPower();
         
         /* Interrupts */
         
-        bool setInterrupt(adxl345_int type, uint8_t pin);
+        bool setInterrupt(adxl366_int type, uint8_t pin);
         bool setInterruptPolarity(uint8_t pol);
-        bool deleteInterrupt(adxl345_int type);
+        bool deleteInterrupt(adxl366_int type);
         uint8_t readAndClearInterrupts();
-        bool checkInterrupt(uint8_t source, adxl345_int type);
+        bool checkInterrupt(uint8_t source, adxl366_int type);
         bool setLinkBit(bool link);
         void setFreeFallThresholds(float ffg, float fft);
-        bool setGeneralTapParameters(adxl345_actTapSet axes, float threshold, float duration, float latent);
-        bool setAdditionalDoubleTapParameters(bool suppress, float window);
-        uint8_t getActTapStatus();
-        String getActTapStatusAsString();
+
+        // These have completely changed on the 366, there is no longer any reporting of
+        // which axes triggered - instead you just get one bit set in the STATUS regs for each
+        // uint8_t getActTapStatus();
+        // String getActTapStatusAsString();
+
         
         // These have had to change from ADXL345_WE because the axis mask is now shared
         // between them instead of being separate for each. What ADXL345_WE called "AC"/"DC" 
@@ -357,13 +372,18 @@ class ADXL366_WE
         // a simple bool, because how that's enabled is also different.
         bool setActivityParameters(bool useReferenced, float threshold);
         bool setInactivityParameters(bool useReferenced, float threshold, uint8_t inactTime);
+        bool setGeneralTapParameters(float threshold, float duration, float latent);
         bool setAxisMask(adxl366_axisMask axisMask);
         bool setTapAxis(adxl366_tapAxis tapAxis);
+        // This has also changed from setAdditionalDoubleTapParameters because there's only one parameter now,
+        // there doesn't seem to be any equivalent of the 345's "suppress" bit.
+        bool setDoubleTapWindow(float window);
 
         /* FIFO */
         
-        bool setFifoParameters(adxl345_triggerInt intNumber, uint8_t samples);
-        bool setFifoMode(adxl345_fifoMode mode);
+        // FIFO parameters have changed a lot. I think it makes more sense to set them all here
+        // rather than having a separate setFifoMode()
+        bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes, adxl366_fifoExtra extra, uint16_t samples);
         uint8_t getFifoStatus();
         bool resetTrigger();
        
@@ -384,7 +404,7 @@ class ADXL366_WE
         int sckPin;  
         int sensorID;
         float rangeFactor;
-        bool adxl345_lowRes;
+        bool adxl366_lowRes;
         void writeRegister(adxl366_register reg, uint8_t val);
         bool readRegister8(adxl366_register reg, uint8_t *val);
         bool readMultipleRegisters(adxl366_register reg, uint8_t count, uint8_t *buf);

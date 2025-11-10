@@ -346,50 +346,50 @@ bool ADXL366_WE::setMeasureMode(bool measure){
     return true;
 }
 
-bool ADXL366_WE::setSleep(bool sleep, adxl366_wUpFreq freq){
-    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
-        return false;
-    }
-    if (freq != ADXL366_WUP_FQ_UNSET) {
-        regVal &= 0b11111100;
-        regVal |= freq;
-    }
-    if(sleep){
-        regVal |= (1<<ADXL366_SLEEP);
-    }
-    else{
-        // it is recommended to enter Stand Mode when clearing the Sleep Bit!
-        if (!setMeasureMode(false)) {
-            return false;
-        }
-        regVal &= ~(1<<ADXL366_SLEEP);
-        regVal &= ~(1<<ADXL366_MEASURE);
-    }
-    writeRegister(ADXL366_POWER_CTL, regVal);
-    if(!sleep){
-        setMeasureMode(true); // No return check here as the setting has been changed already
-    }
-    return true;
-}
+// bool ADXL366_WE::setSleep(bool sleep, adxl366_wUpFreq freq){
+//     if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
+//         return false;
+//     }
+//     if (freq != ADXL366_WUP_FQ_UNSET) {
+//         regVal &= 0b11111100;
+//         regVal |= freq;
+//     }
+//     if(sleep){
+//         regVal |= (1<<ADXL366_SLEEP);
+//     }
+//     else{
+//         // it is recommended to enter Stand Mode when clearing the Sleep Bit!
+//         if (!setMeasureMode(false)) {
+//             return false;
+//         }
+//         regVal &= ~(1<<ADXL366_SLEEP);
+//         regVal &= ~(1<<ADXL366_MEASURE);
+//     }
+//     writeRegister(ADXL366_POWER_CTL, regVal);
+//     if(!sleep){
+//         setMeasureMode(true); // No return check here as the setting has been changed already
+//     }
+//     return true;
+// }
     
-bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl366_wUpFreq freq){
-    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
-        return false;
-    }
-    if(autoSleep){
-        // Both AUTO_SLEEP and LINK bits must be set
-        regVal |= (1<<ADXL366_AUTO_SLEEP) | (1<<ADXL366_LINK);
-    } else {
-        // The AUTO_SLEEP bit is cleared, but leave the LINK bit alone in case set by something else
-        regVal &= ~(1<<ADXL366_AUTO_SLEEP);
-    }
-    if (freq != ADXL366_WUP_FQ_UNSET) {
-        regVal &= 0b11111100;
-        regVal |= freq;
-    }
-    writeRegister(ADXL366_POWER_CTL, regVal);
-    return true;
-}
+// bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl366_wUpFreq freq){
+//     if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
+//         return false;
+//     }
+//     if(autoSleep){
+//         // Both AUTO_SLEEP and LINK bits must be set
+//         regVal |= (1<<ADXL366_AUTO_SLEEP) | (1<<ADXL366_LINK);
+//     } else {
+//         // The AUTO_SLEEP bit is cleared, but leave the LINK bit alone in case set by something else
+//         regVal &= ~(1<<ADXL366_AUTO_SLEEP);
+//     }
+//     if (freq != ADXL366_WUP_FQ_UNSET) {
+//         regVal &= 0b11111100;
+//         regVal |= freq;
+//     }
+//     writeRegister(ADXL366_POWER_CTL, regVal);
+//     return true;
+// }
         
 bool ADXL366_WE::isAsleep(){
     if (!readRegister8(ADXL366_STATUS, &regVal)) {
@@ -482,32 +482,32 @@ bool ADXL366_WE::checkInterrupt(uint32_t source, adxl366_int type){
     return source & (1<<type);
 }
 
-bool ADXL366_WE::setLinkBit(bool link){
-    if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
-        return false;
-    }
-    if(link){
-        regVal |= (1<<ADXL366_LINK);
-    }
-    else{
-        regVal &= ~(1<<ADXL366_LINK);
-    }
-    writeRegister(ADXL366_POWER_CTL, regVal);
-    return true;
-}
+// bool ADXL366_WE::setLinkBit(bool link){
+//     if (!readRegister8(ADXL366_POWER_CTL, &regVal)) {
+//         return false;
+//     }
+//     if(link){
+//         regVal |= (1<<ADXL366_LINK);
+//     }
+//     else{
+//         regVal &= ~(1<<ADXL366_LINK);
+//     }
+//     writeRegister(ADXL366_POWER_CTL, regVal);
+//     return true;
+// }
 
-void ADXL366_WE::setFreeFallThresholds(float ffg, float fft){
-    regVal = static_cast<uint8_t>(round(ffg / 0.0625));
-    if(regVal<1){
-        regVal = 1;
-    }
-    writeRegister(ADXL366_THRESH_FF, regVal);
-    regVal = static_cast<uint8_t>(round(fft / 5));
-    if(regVal<1){
-        regVal = 1;
-    }
-    writeRegister(ADXL366_TIME_FF, regVal);
-}
+// void ADXL366_WE::setFreeFallThresholds(float ffg, float fft){
+//     regVal = static_cast<uint8_t>(round(ffg / 0.0625));
+//     if(regVal<1){
+//         regVal = 1;
+//     }
+//     writeRegister(ADXL366_THRESH_FF, regVal);
+//     regVal = static_cast<uint8_t>(round(fft / 5));
+//     if(regVal<1){
+//         regVal = 1;
+//     }
+//     writeRegister(ADXL366_TIME_FF, regVal);
+// }
 
 bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));

@@ -337,10 +337,10 @@ bool ADXL366_WE::setMeasureMode(bool measure){
         return false;
     }
     if(measure){
-        regVal |= (1<<ADXL366_MEASURE);
+        regVal |= 0x02;
     }
     else{
-        regVal &= ~(1<<ADXL366_MEASURE);
+        regVal &= ~0x02;
     }
     writeRegister(ADXL366_POWER_CTL, regVal);
     return true;

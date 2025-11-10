@@ -375,8 +375,8 @@ class ADXL366_WE
         bool setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt = false);
         bool setInterruptPolarity(uint8_t pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
         bool deleteInterrupt(adxl366_int type, uint8_t pin = 0);
-        uint8_t readAndClearInterrupts();
-        bool checkInterrupt(uint8_t source, adxl366_int type);
+        uint32_t readAndClearInterrupts(); // Changed return type because the 366 has more interrupts
+        bool checkInterrupt(uint32_t source, adxl366_int type); // Changed type of first param to match above
         bool setLinkBit(bool link);
         void setFreeFallThresholds(float ffg, float fft);
 

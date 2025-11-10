@@ -392,32 +392,32 @@ bool ADXL366_WE::setAutoSleep(bool autoSleep, adxl366_wUpFreq freq){
 }
         
 bool ADXL366_WE::isAsleep(){
-    if (!readRegister8(ADXL366_ACT_TAP_STATUS, &regVal)) {
+    if (!readRegister8(ADXL366_STATUS, &regVal)) {
         return false; // Not ideal
     }
-    return regVal & (1<<ADXL366_ASLEEP);
+    return !(regVal & (1<<ADXL366_INT_AWAKE));
 }
 
-bool ADXL366_WE::setLowPower(bool lowpwr){
-    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
-        return false;
-    }
-    if(lowpwr){
-        regVal |= (1<<ADXL366_LOW_POWER);
-    }
-    else{
-        regVal &= ~(1<<ADXL366_LOW_POWER);
-    }
-    writeRegister(ADXL366_BW_RATE, regVal);
-    return true;
-}
+// bool ADXL366_WE::setLowPower(bool lowpwr){
+//     if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
+//         return false;
+//     }
+//     if(lowpwr){
+//         regVal |= (1<<ADXL366_LOW_POWER);
+//     }
+//     else{
+//         regVal &= ~(1<<ADXL366_LOW_POWER);
+//     }
+//     writeRegister(ADXL366_BW_RATE, regVal);
+//     return true;
+// }
 
-bool ADXL366_WE::isLowPower(){
-    if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
-        return false; // Not ideal
-    }
-    return regVal & (1<<ADXL366_LOW_POWER);
-}
+// bool ADXL366_WE::isLowPower(){
+//     if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
+//         return false; // Not ideal
+//     }
+//     return regVal & (1<<ADXL366_LOW_POWER);
+// }
             
 /************ Interrupts ************/
 
@@ -433,9 +433,8 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin) {
     }
     // As we've now selected the correct INTMAP "bank", clear the bank select bit of the type
     // so it's just the bit number within this bank.
-    type &= ~0x80;
     // Enable the interrupt
-    regVal |= (1<<type);
+    regVal |= (1<<(type & 0x80));
     writeRegister(reg, regVal);
     return true;
 }
@@ -457,27 +456,24 @@ bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
         regVal |= (pol << 7);
         writeRegister(ADXL366_INTMAP2_LOWER, regVal);
     }
-    writeRegister(ADXL366_DATA_FORMAT, regVal);
     return true;
 }
 
-bool ADXL366_WE::deleteInterrupt(adxl366_int type){
-    if (!readRegister8(ADXL366_INT_ENABLE, &regVal)) {
-        return false;
-    }
-    regVal &= ~(1<<type);
-    writeRegister(ADXL366_INT_ENABLE, regVal);
-    return true;
+bool ADXL366_WE::deleteInterrupt(adxl366_int type, uint8_t pin){
+    return setInterrupt(type, pin, true);
 }
 
-uint8_t ADXL366_WE::readAndClearInterrupts(){
-    if (!readRegister8(ADXL366_INT_SOURCE, &regVal)) {
+uint32_t ADXL366_WE::readAndClearInterrupts(){
+    uint8_t status[3];
+    if (!readMultipleRegisters(ADXL366_STATUS_COPY, 3, status)) {
         return 0; // Not ideal
     }
-    return regVal;
+    uint32_t merged;
+    memcpy(&merged, status, 3);
+    return merged;
 }
 
-bool ADXL366_WE::checkInterrupt(uint8_t source, adxl366_int type){
+bool ADXL366_WE::checkInterrupt(uint32_t source, adxl366_int type){
     return source & (1<<type);
 }
 
@@ -513,31 +509,37 @@ bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     if(regVal<1){
         regVal = 1;
     }
-    
     writeRegister(ADXL366_THRESH_ACT, regVal);
 
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
-    regVal &= 0x0F;
-    regVal |= (static_cast<uint8_t>(mode) + static_cast<uint8_t>(axes))<<4;
+    regVal &= 0x03;
+    regVal |= 0x01;
+    if (useReferenced) {
+        regVal |= 0x02;
+    }
     writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }
 
-bool ADXL366_WE::setInactivityParameters(bool useReferenced, float threshold, uint8_t inactTime) {
+bool ADXL366_WE::setInactivityParameters(bool useReferenced, float threshold, uint16_t inactTime) {
     regVal = static_cast<uint8_t>(round(threshold / 0.0625));
     if(regVal<1){
         regVal = 1;
     }
-    writeRegister(ADXL366_THRESH_INACT, regVal);
-    writeRegister(ADXL366_TIME_INACT, inactTime);
+    writeRegister(ADXL366_THRESH_INACT_H, regVal);
+    writeRegister(ADXL366_TIME_INACT_H, inactTime >> 8);
+    writeRegister(ADXL366_TIME_INACT_L, inactTime & 0xff);
 
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
-    regVal &= 0xF0;
-    regVal |= static_cast<uint8_t>(mode) + static_cast<uint16_t>(axes);
+    regVal &= 0x0c;
+    regVal |= 0x04;
+    if (useReferenced) {
+        regVal |= 0x08;
+    }
     writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }

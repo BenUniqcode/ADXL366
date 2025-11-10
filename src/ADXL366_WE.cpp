@@ -37,7 +37,7 @@ bool ADXL366_WE::init(bool startMeasuring){
         // existing value. But we are resetting anyway.
         uint32_t i2cClock = _wire->getClock();
         if (i2cClock < 400000L) {
-            Serial.printf("I2C clock is %lu, disabling High Speed mode on ADXL\n", i2cClock);
+            Serial.printf("I2C clock is %u, disabling High Speed mode on ADXL\n", i2cClock);
             writeRegister(ADXL366_FILTER_CTL, 0x20);
         }
     }
@@ -104,7 +104,7 @@ adxl366_dataRate ADXL366_WE::getDataRate(){
 
 
 String ADXL366_WE::getDataRateAsString(){
-    adxl345_dataRate dataRate = getDataRate();    
+    adxl366_dataRate dataRate = getDataRate();    
     switch(dataRate) {
         case ADXL366_DATA_RATE_ERROR: return(F("ERROR")); break;
         case ADXL366_DATA_RATE_400:  return(F("400 Hz"));  break;
@@ -134,7 +134,7 @@ bool ADXL366_WE::setRange(adxl366_range range){
     return true;
 }
 
-adxl345_range ADXL366_WE::getRange(){
+adxl366_range ADXL366_WE::getRange(){
     if (!readRegister8(ADXL366_FILTER_CTL, &regVal)) {
         return ADXL366_RANGE_ERROR;
     }
@@ -298,7 +298,7 @@ adxl366_orientation ADXL366_WE::getOrientation(){
 }
 
 String ADXL366_WE::getOrientationAsString(){
-    adxl345_orientation orientation = getOrientation();
+    adxl366_orientation orientation = getOrientation();
     String orientationAsString = "";
     switch(orientation){
         case ADXL366_ORIENTATION_ERROR: orientationAsString = "ERROR"; break;

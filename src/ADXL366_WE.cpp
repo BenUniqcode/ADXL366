@@ -421,7 +421,7 @@ bool ADXL366_WE::isAsleep(){
             
 /************ Interrupts ************/
 
-bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin) {
+bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt) {
     adxl366_register reg;
     if (pin == INT_PIN_1) {
         reg = (type > 7) ? ADXL366_INTMAP1_UPPER : ADXL366_INTMAP1_LOWER;
@@ -433,8 +433,13 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin) {
     }
     // As we've now selected the correct INTMAP "bank", clear the bank select bit of the type
     // so it's just the bit number within this bank.
-    // Enable the interrupt
-    regVal |= (1<<(type & 0x80));
+    uint8_t bitMask = 1<<(type & 0x80);
+    // Enable or disable the interrupt
+    if (deleteInterrupt) {
+        regVal &= ~bitMask;
+    } else {
+        regVal |= bitMask;
+    }
     writeRegister(reg, regVal);
     return true;
 }

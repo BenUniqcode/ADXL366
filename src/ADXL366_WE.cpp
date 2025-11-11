@@ -48,14 +48,14 @@ bool ADXL366_WE::init(bool startMeasuring){
 
     if (!ok || devid[0] != 0xad || devid[1] != 0x1d || devid[2] != 0xf7) {
         // If we didn't get a response, try a soft reset
-        Serial.printf("Invalid device ID: Found 0x%02x%02x%02x, expected 0xad1df7 - trying soft reset\n", devid[0], devid[1], devid[2], devid[3]);
+        Serial.printf("Invalid device ID: Found 0x%02x%02x%02x, expected 0xad1df7 - trying soft reset\n", devid[0], devid[1], devid[2]);
         // Trigger a soft reset and wait 20ms
         writeRegister(ADXL366_SOFT_RESET, SOFT_RESET_VAL);
         delay(20);
         // Try the read again
         ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
         if (!ok || devid[0] != 0xad || devid[1] != 0x1d || devid[2] != 0xf7) {
-            Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - giving up\n", devid[0], devid[1], devid[2], devid[3]);
+            Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - giving up\n", devid[0], devid[1], devid[2]);
             return false;
         }
     }

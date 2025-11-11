@@ -55,7 +55,7 @@ bool ADXL366_WE::init(bool startMeasuring){
         // Try the read again
         ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
         if (!ok || devid[0] != 0xad || devid[1] != 0x1d || devid[2] != 0xf7) {
-            Serial.printf("Invalid device ID: Found 0x%0x%0x%0x%0x, expected 0xad1df705 - giving up\n", devid[0], devid[1], devid[2]);
+            Serial.printf("Invalid device ID: Found 0x%02x%02x%02x, expected 0xad1df7 - giving up\n", devid[0], devid[1], devid[2]);
             return false;
         }
     }

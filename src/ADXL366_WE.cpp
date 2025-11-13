@@ -43,6 +43,7 @@ bool ADXL366_WE::init(bool startMeasuring){
     }
 
     // Check that the device is present and communicating, by reading the first 4 registers
+    // The first 3 are the same for both the 366 and 367 - they differ only by the fourth.
     uint8_t devid[4];
     bool ok = readMultipleRegisters(ADXL366_DEVID_AD, 4, devid);
 
@@ -60,9 +61,15 @@ bool ADXL366_WE::init(bool startMeasuring){
         }
     }
     // Rev number: 0x03 = ADXL367, 0x05 = ADXL366
-    Serial.printf("Found device revision number 0x%02x\n", devid[3]);
+    if (devid[3] == 0x03) {
+        Serial.println("Found device ADXL367");
+    } else if (devid[3] == 0x05) {
+        Serial.println("Found device ADXL366");
+    } else {
+        Serial.printf("Found unknown ADXL device revision number 0x%02x\n", devid[3]);
+    }
 
-    // Check that writing to registers on the device is succeeding
+    // TODO: Check that writing to registers on the device is succeeding
 
     // Start measure mode unless caller asked not to
     if (startMeasuring) {

@@ -84,6 +84,7 @@ void ADXL366_WE::setSPIClockSpeed(unsigned long clock = 5000000){
 }
 
 void ADXL366_WE::setCorrFactors(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax){
+    const float UNITS_PER_G = 1000.0 / (rangeFactor * MILLI_G_PER_LSB);
     corrFact.x = UNITS_PER_G / (0.5 * (xMax - xMin));
     corrFact.y = UNITS_PER_G / (0.5 * (yMax - yMin));
     corrFact.z = UNITS_PER_G / (0.5 * (zMax - zMin));
@@ -194,9 +195,12 @@ bool ADXL366_WE::getRawValues(xyzFloat *rawVal){
     if (!readMultipleRegisters(ADXL366_XDATA_H, 6, rawData)) {
         return false;
     }
-    rawVal->x = (static_cast<int16_t>((rawData[0] << 6) | rawData[1])) * 1.0;
-    rawVal->y = (static_cast<int16_t>((rawData[2] << 6) | rawData[3])) * 1.0;
-    rawVal->z = (static_cast<int16_t>((rawData[4] << 6) | rawData[5])) * 1.0;
+    // These are 14-bit numbers. We must shift them such that the MSB is at the top bit when
+    // casting to int16_t, so that it is used for the sign bit. 
+    // Then we need to divide by 4 to get rid of the excess bits.
+    rawVal->x = (static_cast<int16_t>((rawData[0] << 8) | rawData[1])) * 0.25;
+    rawVal->y = (static_cast<int16_t>((rawData[2] << 8) | rawData[3])) * 0.25;
+    rawVal->z = (static_cast<int16_t>((rawData[4] << 8) | rawData[5])) * 0.25;
     return true;
 }
 

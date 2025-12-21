@@ -327,7 +327,6 @@ class ADXL366_WE
         /* Other */
         
         static constexpr float MILLI_G_PER_LSB {0.25}; // (In the 2G range; multiply by rangeFactor for other ranges)
-        static constexpr float UNITS_PER_G {256.41}; // = 1/0.0039 TODO: I don't quite understand this
         
         /* Basic settings */
         

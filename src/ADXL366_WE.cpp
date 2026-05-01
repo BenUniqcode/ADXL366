@@ -486,7 +486,7 @@ uint32_t ADXL366_WE::readAndClearInterrupts(){
     if (!readMultipleRegisters(ADXL366_STATUS_COPY, 3, status)) {
         return 0; // Not ideal
     }
-    uint32_t merged;
+    uint32_t merged = 0;
     memcpy(&merged, status, 3);
     return merged;
 }

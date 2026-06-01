@@ -434,6 +434,14 @@ bool ADXL366_WE::isAsleep(){
             
 /************ Interrupts ************/
 
+void ADXL366_WE::disableAllInterrupts()
+{
+    writeRegister(ADXL366_INTMAP1_LOWER, 0);
+    writeRegister(ADXL366_INTMAP2_LOWER, 0);
+    writeRegister(ADXL366_INTMAP1_UPPER, 0);
+    writeRegister(ADXL366_INTMAP2_UPPER, 0);
+}
+
 bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt) {
     adxl366_register reg;
     if (pin == INT_PIN_1) {

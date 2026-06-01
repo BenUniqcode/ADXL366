@@ -371,6 +371,7 @@ class ADXL366_WE
         
         /* Interrupts */
         
+        void disableAllInterrupts();
         bool setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt = false);
         bool setInterruptPolarity(uint8_t pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
         bool deleteInterrupt(adxl366_int type, uint8_t pin = 0);

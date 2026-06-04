@@ -408,6 +408,7 @@ class ADXL366_WE
         bool setFifoMode(adxl366_fifoMode mode);
         uint8_t getFifoStatus();
         bool resetTrigger();
+        bool dumpAllRegisters();
        
     protected:
         TwoWire *_wire;

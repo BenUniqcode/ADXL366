@@ -671,8 +671,24 @@ bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
 //     return regVal;
 // }
 
-bool ADXL366_WE::resetTrigger(){
+bool ADXL366_WE::resetTrigger() 
+{
     return setFifoMode(ADXL366_BYPASS) && setFifoMode(ADXL366_TRIGGER);
+}
+
+bool ADXL366_WE::dumpAllRegisters()
+{
+    uint8_t buf[ADXL366_PEDOMETER_SENS_L];
+    if (!readMultipleRegisters(0, ADXL366_PEDOMETER_SENS_L, buf))
+    {
+        Serial.printf("getAllRegisters failed");
+        return false;
+    }
+    for (int i = 0; i < ADXL366_PEDOMETER_SENS_L; i++)
+    {
+        Serial.printf("%02x: %02x\n", i, buf[i]);
+    }
+    return true;
 }
 
 

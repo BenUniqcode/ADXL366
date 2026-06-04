@@ -454,7 +454,7 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
     }
     // As we've now selected the correct INTMAP "bank", clear the bank select bit of the type
     // so it's just the bit number within this bank.
-    uint8_t bitMask = 1<<(type & 0x80);
+    uint8_t bitMask = 1U << (type & ~0x80);
     // Enable or disable the interrupt
     if (setOn) {
         regVal |= bitMask;

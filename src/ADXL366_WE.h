@@ -372,7 +372,7 @@ class ADXL366_WE
         /* Interrupts */
         
         void disableAllInterrupts();
-        bool setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt = false);
+        bool setInterrupt(adxl366_int type, uint8_t pin, bool setOn = true);
         bool setInterruptPolarity(uint8_t pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
         bool deleteInterrupt(adxl366_int type, uint8_t pin = 0);
         uint32_t readAndClearInterrupts(); // Changed return type because the 366 has more interrupts

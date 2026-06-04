@@ -442,7 +442,7 @@ void ADXL366_WE::disableAllInterrupts()
     writeRegister(ADXL366_INTMAP2_UPPER, 0);
 }
 
-bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrupt) {
+bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
     adxl366_register reg;
     if (pin == INT_PIN_1) {
         reg = (type > 7) ? ADXL366_INTMAP1_UPPER : ADXL366_INTMAP1_LOWER;
@@ -456,11 +456,12 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool deleteInterrup
     // so it's just the bit number within this bank.
     uint8_t bitMask = 1<<(type & 0x80);
     // Enable or disable the interrupt
-    if (deleteInterrupt) {
-        regVal &= ~bitMask;
-    } else {
+    if (setOn) {
         regVal |= bitMask;
+    } else {
+        regVal &= ~bitMask;
     }
+    Serial.printf("setInterrupt: Setting register 0x%02x to value 0x%02x\n", reg, regVal);
     writeRegister(reg, regVal);
     return true;
 }
@@ -486,7 +487,7 @@ bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
 }
 
 bool ADXL366_WE::deleteInterrupt(adxl366_int type, uint8_t pin){
-    return setInterrupt(type, pin, true);
+    return setInterrupt(type, pin, false);
 }
 
 uint32_t ADXL366_WE::readAndClearInterrupts(){
@@ -495,7 +496,7 @@ uint32_t ADXL366_WE::readAndClearInterrupts(){
         return 0; // Not ideal
     }
     uint32_t merged = 0;
-    memcpy(&merged, status, 3);
+    memcpy(&merged, status, 3); // Assumes Little Endian (LSB first)?
     return merged;
 }
 
@@ -535,6 +536,7 @@ bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     if(regVal<1){
         regVal = 1;
     }
+    Serial.printf("setActivityParameters: Setting register THRESH_ACT_H to value 0x%02x\n", regVal);
     writeRegister(ADXL366_THRESH_ACT_H, regVal);
 
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
@@ -545,6 +547,7 @@ bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     if (useReferenced) {
         regVal |= 0x02;
     }
+    Serial.printf("setActivityParameters: Setting register ACT_INACT_CTL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }
@@ -576,6 +579,7 @@ bool ADXL366_WE::setAxisMask(adxl366_axisMask axisMask) {
     }
     regVal &= ~0x07;
     regVal |= axisMask;
+    Serial.printf("setAxisMask: Setting register AXIS_MASK to value 0x%02x\n", regVal);
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
@@ -586,6 +590,7 @@ bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
     }
     regVal &= ~0x30;
     regVal |= tapAxis;
+    Serial.printf("setTapAxis: Setting register AXIS_MASK to value 0x%02x\n", regVal);
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
@@ -646,6 +651,7 @@ bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes,
     regVal |= (samples & 0x100) << 2;
     // Bits 1:0 = mode
     regVal |= mode;
+    Serial.printf("setFifoParameters: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_FIFO_CONTROL, regVal);
     return true;
 }
@@ -658,6 +664,7 @@ bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
     // Bits 1:0 = mode
     regVal &= 0x03;
     regVal |= mode;
+    Serial.printf("setFifoMode: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_FIFO_CONTROL, regVal);
     return true;
 }

@@ -68,7 +68,13 @@ bool ADXL366_WE::init(bool startMeasuring){
         Serial.printf("Found unknown ADXL device revision number 0x%02x\n", devid[3]);
     }
 
-    // TODO: Check that writing to registers on the device is succeeding
+    // Disable all interrupts
+    writeRegister(ADXL366_INTMAP1_LOWER, 0);
+    writeRegister(ADXL366_INTMAP2_LOWER, 0);
+    writeRegister(ADXL366_INTMAP1_UPPER, 0);
+    writeRegister(ADXL366_INTMAP2_UPPER, 0);
+    // Clear any extant interrupts
+    readAndClearInterrupts();
 
     // Start measure mode unless caller asked not to
     if (startMeasuring) {

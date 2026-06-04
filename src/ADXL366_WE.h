@@ -24,7 +24,7 @@ constexpr uint8_t INT_PIN_1        {0x01};
 constexpr uint8_t INT_PIN_2        {0x02};
 constexpr uint8_t ADXL366_ACT_LOW  {0x01}; 
 constexpr uint8_t ADXL366_ACT_HIGH {0x00};
-constexpr uint8_t SOFT_RESET_VAL   {0x52}; // Value to write to the SOFT_RESET register to trigger a reset
+constexpr uint8_t ADXL366_SOFT_RESET_VAL   {0x52}; // Value to write to the SOFT_RESET register to trigger a reset
 #define ADXL367_ACT_LOW ADXL366_ACT_LOW
 #define ADXL367_ACT_HIGH ADXL366_ACT_HIGH
 
@@ -408,6 +408,7 @@ class ADXL366_WE
         bool setFifoMode(adxl366_fifoMode mode);
         uint8_t getFifoStatus();
         bool resetTrigger();
+        void softReset();
         bool dumpAllRegisters();
        
     protected:

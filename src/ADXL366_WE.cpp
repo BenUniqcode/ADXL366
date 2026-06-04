@@ -98,7 +98,7 @@ bool ADXL366_WE::setDataRate(adxl366_dataRate rate){
     if (!readRegister8(ADXL366_FILTER_CTL, &regVal) || rate == ADXL366_DATA_RATE_ERROR) {
         return false;
     }
-    regVal &= 0xF8;
+    regVal &= ~0x07;
     regVal |= rate;
     writeRegister(ADXL366_FILTER_CTL, regVal);
     return true;
@@ -453,7 +453,7 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
         return false;
     }
     // As we've now selected the correct INTMAP "bank", clear the bank select bit of the type
-    // so it's just the bit number within this bank.
+    // so it's just the bit number within this bank, then select that bit.
     uint8_t bitMask = 1U << (type & ~0x80);
     // Enable or disable the interrupt
     if (setOn) {
@@ -461,7 +461,6 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
     } else {
         regVal &= ~bitMask;
     }
-    Serial.printf("setInterrupt: Setting register 0x%02x to value 0x%02x\n", reg, regVal);
     writeRegister(reg, regVal);
     return true;
 }
@@ -471,7 +470,7 @@ bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
         if (!readRegister8(ADXL366_INTMAP1_LOWER, &regVal)) {
             return false;
         }
-        regVal &= 0x80;
+        regVal &= ~0x80;
         regVal |= (pol << 7);
         writeRegister(ADXL366_INTMAP1_LOWER, regVal);
     }
@@ -479,7 +478,7 @@ bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
         if (!readRegister8(ADXL366_INTMAP2_LOWER, &regVal)) {
             return false;
         }
-        regVal &= 0x80;
+        regVal &= ~0x80;
         regVal |= (pol << 7);
         writeRegister(ADXL366_INTMAP2_LOWER, regVal);
     }
@@ -536,18 +535,16 @@ bool ADXL366_WE::setActivityParameters(bool useReferenced, float threshold) {
     if(regVal<1){
         regVal = 1;
     }
-    Serial.printf("setActivityParameters: Setting register THRESH_ACT_H to value 0x%02x\n", regVal);
     writeRegister(ADXL366_THRESH_ACT_H, regVal);
 
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
-    regVal &= 0x03;
+    regVal &= ~0x03;
     regVal |= 0x01;
     if (useReferenced) {
         regVal |= 0x02;
     }
-    Serial.printf("setActivityParameters: Setting register ACT_INACT_CTL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_ACT_INACT_CTL, regVal);
     return true;
 }
@@ -564,7 +561,7 @@ bool ADXL366_WE::setInactivityParameters(bool useReferenced, float threshold, ui
     if (!readRegister8(ADXL366_ACT_INACT_CTL, &regVal)) {
         return false;
     }
-    regVal &= 0x0c;
+    regVal &= ~0x0c;
     regVal |= 0x04;
     if (useReferenced) {
         regVal |= 0x08;
@@ -579,7 +576,6 @@ bool ADXL366_WE::setAxisMask(adxl366_axisMask axisMask) {
     }
     regVal &= ~0x07;
     regVal |= axisMask;
-    Serial.printf("setAxisMask: Setting register AXIS_MASK to value 0x%02x\n", regVal);
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
@@ -590,7 +586,6 @@ bool ADXL366_WE::setTapAxis(adxl366_tapAxis tapAxis) {
     }
     regVal &= ~0x30;
     regVal |= tapAxis;
-    Serial.printf("setTapAxis: Setting register AXIS_MASK to value 0x%02x\n", regVal);
     writeRegister(ADXL366_AXIS_MASK, regVal);
     return true;
 }
@@ -662,7 +657,7 @@ bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
         return false;
     }
     // Bits 1:0 = mode
-    regVal &= 0x03;
+    regVal &= ~0x03;
     regVal |= mode;
     Serial.printf("setFifoMode: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_FIFO_CONTROL, regVal);

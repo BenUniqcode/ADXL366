@@ -651,7 +651,7 @@ bool ADXL366_WE::setFifoParameters(adxl366_fifoMode mode, adxl366_fifoAxes axes,
     regVal |= (samples & 0x100) << 2;
     // Bits 1:0 = mode
     regVal |= mode;
-    Serial.printf("setFifoParameters: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
+    //Serial.printf("setFifoParameters: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_FIFO_CONTROL, regVal);
     return true;
 }
@@ -664,7 +664,7 @@ bool ADXL366_WE::setFifoMode(adxl366_fifoMode mode)
     // Bits 1:0 = mode
     regVal &= ~0x03;
     regVal |= mode;
-    Serial.printf("setFifoMode: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
+    //Serial.printf("setFifoMode: Setting register FIFO_CONTROL to value 0x%02x\n", regVal);
     writeRegister(ADXL366_FIFO_CONTROL, regVal);
     return true;
 }

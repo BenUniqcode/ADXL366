@@ -326,7 +326,7 @@ class ADXL366_WE
                 
         /* Other */
         
-        static constexpr float MILLI_G_PER_LSB {0.25}; // (In the 2G range; multiply by rangeFactor for other ranges)
+        static constexpr float MILLI_G_PER_LSB {1.0}; // (In the 2G range; multiply by rangeFactor for other ranges)
         
         /* Basic settings */
         

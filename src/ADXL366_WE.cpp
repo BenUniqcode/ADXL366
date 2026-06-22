@@ -200,12 +200,10 @@ bool ADXL366_WE::getRawValues(xyzFloat *rawVal){
     if (!readMultipleRegisters(ADXL366_XDATA_H, 6, rawData)) {
         return false;
     }
-    // These are 14-bit numbers. We must shift them such that the MSB is at the top bit when
-    // casting to int16_t, so that it is used for the sign bit. 
-    // Then we need to divide by 4 to get rid of the excess bits.
-    rawVal->x = (static_cast<int16_t>((rawData[0] << 8) | rawData[1])) * 0.25;
-    rawVal->y = (static_cast<int16_t>((rawData[2] << 8) | rawData[3])) * 0.25;
-    rawVal->z = (static_cast<int16_t>((rawData[4] << 8) | rawData[5])) * 0.25;
+    // These are 16-bit numbers, albeit with only 14 bits of precision, in MSB-first order.
+    rawVal->x = (static_cast<int16_t>((rawData[0] << 8) | rawData[1])) * 1.0;
+    rawVal->y = (static_cast<int16_t>((rawData[2] << 8) | rawData[3])) * 1.0;
+    rawVal->z = (static_cast<int16_t>((rawData[4] << 8) | rawData[5])) * 1.0;
     return true;
 }
 

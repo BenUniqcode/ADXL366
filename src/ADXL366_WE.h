@@ -22,8 +22,6 @@
 
 constexpr uint8_t INT_PIN_1        {0x01};   
 constexpr uint8_t INT_PIN_2        {0x02};
-constexpr uint8_t ADXL366_ACT_LOW  {0x01}; 
-constexpr uint8_t ADXL366_ACT_HIGH {0x00};
 constexpr uint8_t ADXL366_SOFT_RESET_VAL   {0x52}; // Value to write to the SOFT_RESET register to trigger a reset
 #define ADXL367_ACT_LOW ADXL366_ACT_LOW
 #define ADXL367_ACT_HIGH ADXL366_ACT_HIGH
@@ -160,6 +158,10 @@ typedef enum ADXL366_ORIENTATION {
   FLAT = 0, FLAT_1, XY, XY_1, YX, YX_1
 } adxl366_orientation;
 
+typedef enum ADXL366_INT_POLARITY : uint8_t {
+    ADXL366_ACT_HIGH = 0,
+    ADXL366_ACT_LOW = 1
+} adxl366_int_polarity;
 /** 
  * Interrupt enables Low reg (one for each pin)
  * DATA_READY,
@@ -198,42 +200,80 @@ typedef enum ADXL366_ORIENTATION {
  */
 
 
-// Bits in INTMAP[12]_LOWER and _UPPER and STATUS/2/3 (and STATUS_COPY) registers
-typedef enum ADXL366_INT {
-    ADXL366_INT_DATA_READY,
-    ADXL366_INT_FIFO_READY,
-    ADXL366_INT_FIFO_WATERMARK,
-    ADXL366_INT_FIFO_OVERRUN,
-    ADXL366_INT_ACT,
-    ADXL366_INT_INACT,
-    ADXL366_INT_AWAKE,
-    ADXL366_INT_ACTIVE_LOW,
-    ADXL366_INT_TAP_ONE,
-    ADXL366_INT_TAP_TWO,
-    ADXL366_INT_TEMP_ADC_LOW,
-    ADXL366_INT_TEMP_ADC_HI,
-    ADXL366_INT_KPALV_TIMER,
-    ADXL366_INT_RESERVED,
-    ADXL366_INT_ERR_USER_REGS,
-    ADXL366_INT_ERR_FUSE,
+// Bits in INTMAP[12]_LOWER and _UPPER 
+typedef enum ADXL366_INT_MAP : uint32_t {
+    ADXL366_INT_MAP_DATA_READY,
+    ADXL366_INT_MAP_FIFO_READY,
+    ADXL366_INT_MAP_FIFO_WATERMARK,
+    ADXL366_INT_MAP_FIFO_OVERRUN,
+    ADXL366_INT_MAP_ACT,
+    ADXL366_INT_MAP_INACT,
+    ADXL366_INT_MAP_AWAKE,
+    ADXL366_INT_MAP_ACTIVE_LOW, // In INTMAP* only
+    ADXL366_INT_MAP_TAP_ONE,
+    ADXL366_INT_MAP_TAP_TWO,
+    ADXL366_INT_MAP_TEMP_ADC_LOW,
+    ADXL366_INT_MAP_TEMP_ADC_HI,
+    ADXL366_INT_MAP_KPALV_TIMER,
+    ADXL366_INT_MAP_RESERVED,
+    ADXL366_INT_MAP_ERR_USER_REGS,
+    ADXL366_INT_MAP_ERR_FUSE,
 
-    ADXL367_INT_DATA_READY = ADXL366_INT_DATA_READY,
-    ADXL367_INT_FIFO_READY = ADXL366_INT_FIFO_READY,
-    ADXL367_INT_FIFO_WATERMARK = ADXL366_INT_FIFO_WATERMARK,
-    ADXL367_INT_FIFO_OVERRUN = ADXL366_INT_FIFO_OVERRUN,
-    ADXL367_INT_ACT = ADXL366_INT_ACT,
-    ADXL367_INT_INACT = ADXL366_INT_INACT,
-    ADXL367_INT_AWAKE = ADXL366_INT_AWAKE,
-    ADXL367_INT_ACTIVE_LOW = ADXL366_INT_ACTIVE_LOW,
-    ADXL367_INT_TAP_ONE = ADXL366_INT_TAP_ONE,
-    ADXL367_INT_TAP_TWO = ADXL366_INT_TAP_TWO,
-    ADXL367_INT_TEMP_ADC_LOW = ADXL366_INT_TEMP_ADC_LOW,
-    ADXL367_INT_TEMP_ADC_HI = ADXL366_INT_TEMP_ADC_HI,
-    ADXL367_INT_KPALV_TIMER = ADXL366_INT_KPALV_TIMER,
-    ADXL367_INT_RESERVED = ADXL366_INT_RESERVED,
-    ADXL367_INT_ERR_USER_REGS = ADXL366_INT_ERR_USER_REGS,
-    ADXL367_INT_ERR_FUSE = ADXL366_INT_ERR_FUSE,
-} adxl366_int;
+    ADXL367_INT_MAP_DATA_READY = ADXL366_INT_MAP_DATA_READY,
+    ADXL367_INT_MAP_FIFO_READY = ADXL366_INT_MAP_FIFO_READY,
+    ADXL367_INT_MAP_FIFO_WATERMARK = ADXL366_INT_MAP_FIFO_WATERMARK,
+    ADXL367_INT_MAP_FIFO_OVERRUN = ADXL366_INT_MAP_FIFO_OVERRUN,
+    ADXL367_INT_MAP_ACT = ADXL366_INT_MAP_ACT,
+    ADXL367_INT_MAP_INACT = ADXL366_INT_MAP_INACT,
+    ADXL367_INT_MAP_AWAKE = ADXL366_INT_MAP_AWAKE,
+    ADXL367_INT_MAP_ACTIVE_LOW = ADXL366_INT_MAP_ACTIVE_LOW,
+    ADXL367_INT_MAP_TAP_ONE = ADXL366_INT_MAP_TAP_ONE,
+    ADXL367_INT_MAP_TAP_TWO = ADXL366_INT_MAP_TAP_TWO,
+    ADXL367_INT_MAP_TEMP_ADC_LOW = ADXL366_INT_MAP_TEMP_ADC_LOW,
+    ADXL367_INT_MAP_TEMP_ADC_HI = ADXL366_INT_MAP_TEMP_ADC_HI,
+    ADXL367_INT_MAP_KPALV_TIMER = ADXL366_INT_MAP_KPALV_TIMER,
+    ADXL367_INT_MAP_RESERVED = ADXL366_INT_MAP_RESERVED,
+    ADXL367_INT_MAP_ERR_USER_REGS = ADXL366_INT_MAP_ERR_USER_REGS,
+    ADXL367_INT_MAP_ERR_FUSE = ADXL366_INT_MAP_ERR_FUSE,
+} adxl366_int_map;
+
+// Bits in STATUS/2/3 (and STATUS_COPY) registers
+// These are mostly the same as the INT_MAP bits, but not entirely, hence the different enum
+typedef enum ADXL366_INT_STATUS : uint32_t {
+    ADXL366_INT_STATUS_DATA_READY,
+    ADXL366_INT_STATUS_FIFO_READY,
+    ADXL366_INT_STATUS_FIFO_WATERMARK,
+    ADXL366_INT_STATUS_FIFO_OVERRUN,
+    ADXL366_INT_STATUS_ACT,
+    ADXL366_INT_STATUS_INACT,
+    ADXL366_INT_STATUS_AWAKE,
+    ADXL366_INT_STATUS_ERR_USER_REGS, // In STATUS only
+    ADXL366_INT_STATUS_TAP_ONE,
+    ADXL366_INT_STATUS_TAP_TWO,
+    ADXL366_INT_STATUS_TEMP_ADC_LOW,
+    ADXL366_INT_STATUS_TEMP_ADC_HI,
+    ADXL366_INT_STATUS_KPALV_TIMER,
+    ADXL366_INT_STATUS_RESERVED,
+    ADXL366_INT_STATUS_FUSE_REFRESH,
+    ADXL366_INT_STATUS_ERR_FUSE_REGS,
+
+    ADXL367_INT_STATUS_DATA_READY = ADXL366_INT_STATUS_DATA_READY,
+    ADXL367_INT_STATUS_FIFO_READY = ADXL366_INT_STATUS_FIFO_READY,
+    ADXL367_INT_STATUS_FIFO_WATERMARK = ADXL366_INT_STATUS_FIFO_WATERMARK,
+    ADXL367_INT_STATUS_FIFO_OVERRUN = ADXL366_INT_STATUS_FIFO_OVERRUN,
+    ADXL367_INT_STATUS_ACT = ADXL366_INT_STATUS_ACT,
+    ADXL367_INT_STATUS_INACT = ADXL366_INT_STATUS_INACT,
+    ADXL367_INT_STATUS_AWAKE = ADXL366_INT_STATUS_AWAKE,
+    ADXL367_INT_STATUS_ERR_USER_REGS = ADXL366_INT_STATUS_ERR_USER_REGS,
+    ADXL367_INT_STATUS_TAP_ONE = ADXL366_INT_STATUS_TAP_ONE,
+    ADXL367_INT_STATUS_TAP_TWO = ADXL366_INT_STATUS_TAP_TWO,
+    ADXL367_INT_STATUS_TEMP_ADC_LOW = ADXL366_INT_STATUS_TEMP_ADC_LOW,
+    ADXL367_INT_STATUS_TEMP_ADC_HI = ADXL366_INT_STATUS_TEMP_ADC_HI,
+    ADXL367_INT_STATUS_KPALV_TIMER = ADXL366_INT_STATUS_KPALV_TIMER,
+    ADXL367_INT_STATUS_RESERVED = ADXL366_INT_STATUS_RESERVED,
+    ADXL367_INT_STATUS_FUSE_REFRESH = ADXL366_INT_STATUS_FUSE_REFRESH,
+    ADXL367_INT_STATUS_ERR_FUSE_REGS = ADXL366_INT_STATUS_ERR_FUSE_REGS,
+} adxl366_int_status;
 
 // Bits 0..2 of Axis Mask - set bits mean "ignore this axis"; our names mean the opposite:
 // if X Y or Z is present it means the axis is included, if it's 0 then it's ignored.
@@ -302,12 +342,6 @@ typedef enum ADXL366_FIFO_EXTRA {
     ADXL366_FIFO_WITH_ADC
 } adxl366_fifoExtra;
 
-typedef enum ADXL366_TRIGGER_INT {
-    ADXL366_TRIGGER_INT_1, ADXL366_TRIGGER_INT_2,
-    ADXL367_TRIGGER_INT_1 = ADXL366_TRIGGER_INT_1,
-    ADXL367_TRIGGER_INT_2 = ADXL366_TRIGGER_INT_2
-} adxl366_triggerInt;
-
 class ADXL366_WE
 {
     public: 
@@ -372,11 +406,12 @@ class ADXL366_WE
         /* Interrupts */
         
         void disableAllInterrupts();
-        bool setInterrupt(adxl366_int type, uint8_t pin, bool setOn = true);
-        bool setInterruptPolarity(uint8_t pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
-        bool deleteInterrupt(adxl366_int type, uint8_t pin);
+        void disableAllInterruptsExceptErrors();
+        bool setInterrupt(adxl366_int_map type, uint8_t pin, bool setOn = true);
+        bool setInterruptPolarity(adxl366_int_polarity pol, uint8_t pin = 0); // 0 = both, for backwards compatibility
+        bool deleteInterrupt(adxl366_int_map type, uint8_t pin);
         uint32_t readAndClearInterrupts(); // Changed return type because the 366 has more interrupts
-        bool checkInterrupt(uint32_t source, adxl366_int type); // Changed type of first param to match above
+        bool checkInterrupt(uint32_t source, adxl366_int_status type); // Changed type of first param to match above
         bool setLinkBit(bool link);
         void setFreeFallThresholds(float ffg, float fft);
 
@@ -429,6 +464,8 @@ class ADXL366_WE
         int sensorID;
         float rangeFactor;
         bool adxl366_lowRes;
+        bool intPin1_activeLow = false;
+        bool intPin2_activeLow = false;
         void writeRegister(adxl366_register reg, uint8_t val);
         bool readRegister8(adxl366_register reg, uint8_t *val);
         bool readMultipleRegisters(adxl366_register reg, uint8_t count, uint8_t *buf);

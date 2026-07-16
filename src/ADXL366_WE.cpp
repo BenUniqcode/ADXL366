@@ -68,14 +68,6 @@ bool ADXL366_WE::init(bool startMeasuring){
         Serial.printf("Found unknown ADXL device revision number 0x%02x\n", devid[3]);
     }
 
-    // Disable all interrupts
-    writeRegister(ADXL366_INTMAP1_LOWER, 0);
-    writeRegister(ADXL366_INTMAP2_LOWER, 0);
-    writeRegister(ADXL366_INTMAP1_UPPER, 0);
-    writeRegister(ADXL366_INTMAP2_UPPER, 0);
-    // Clear any extant interrupts
-    readAndClearInterrupts();
-
     // Start measure mode unless caller asked not to
     if (startMeasuring) {
         setMeasureMode(true);
@@ -407,12 +399,12 @@ bool ADXL366_WE::setMeasureMode(bool measure){
 //     return true;
 // }
         
-bool ADXL366_WE::isAsleep(){
-    if (!readRegister8(ADXL366_STATUS, &regVal)) {
-        return false; // Not ideal
-    }
-    return !(regVal & (1<<ADXL366_INT_AWAKE));
-}
+// bool ADXL366_WE::isAsleep(){
+//     if (!readRegister8(ADXL366_STATUS, &regVal)) {
+//         return false; // Not ideal
+//     }
+//     return !(regVal & (1<<ADXL366_INT_STATUS_AWAKE));
+// }
 
 // bool ADXL366_WE::setLowPower(bool lowpwr){
 //     if (!readRegister8(ADXL366_BW_RATE, &regVal)) {
@@ -439,13 +431,21 @@ bool ADXL366_WE::isAsleep(){
 
 void ADXL366_WE::disableAllInterrupts()
 {
-    writeRegister(ADXL366_INTMAP1_LOWER, 0);
-    writeRegister(ADXL366_INTMAP2_LOWER, 0);
+    writeRegister(ADXL366_INTMAP1_LOWER, intPin1_activeLow ? (1U << ADXL366_INT_MAP_ACTIVE_LOW) : 0);
+    writeRegister(ADXL366_INTMAP2_LOWER, intPin2_activeLow ? (1U << ADXL366_INT_MAP_ACTIVE_LOW) : 0);
     writeRegister(ADXL366_INTMAP1_UPPER, 0);
     writeRegister(ADXL366_INTMAP2_UPPER, 0);
 }
 
-bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
+void ADXL366_WE::disableAllInterruptsExceptErrors()
+{
+    writeRegister(ADXL366_INTMAP1_LOWER, intPin1_activeLow ? (1U << ADXL366_INT_MAP_ACTIVE_LOW) : 0);
+    writeRegister(ADXL366_INTMAP2_LOWER, intPin2_activeLow ? (1U << ADXL366_INT_MAP_ACTIVE_LOW) : 0);
+    writeRegister(ADXL366_INTMAP1_UPPER, ((1U << (ADXL366_INT_MAP_ERR_FUSE - 8)) | (1U << (ADXL366_INT_MAP_ERR_USER_REGS - 8))));
+    writeRegister(ADXL366_INTMAP2_UPPER, ((1U << (ADXL366_INT_MAP_ERR_FUSE - 8)) | (1U << (ADXL366_INT_MAP_ERR_USER_REGS - 8))));
+}
+
+bool ADXL366_WE::setInterrupt(adxl366_int_map type, uint8_t pin, bool setOn) {
     adxl366_register reg;
     if (pin == INT_PIN_1) {
         reg = (type > 7) ? ADXL366_INTMAP1_UPPER : ADXL366_INTMAP1_LOWER;
@@ -468,27 +468,29 @@ bool ADXL366_WE::setInterrupt(adxl366_int type, uint8_t pin, bool setOn) {
     return true;
 }
 
-bool ADXL366_WE::setInterruptPolarity(uint8_t pol, uint8_t pin){
+bool ADXL366_WE::setInterruptPolarity(adxl366_int_polarity pol, uint8_t pin){
     if(!pin || pin == INT_PIN_1){
         if (!readRegister8(ADXL366_INTMAP1_LOWER, &regVal)) {
             return false;
         }
-        regVal &= ~0x80;
-        regVal |= (pol << 7);
+        regVal &= ~(1U << ADXL366_INT_MAP_ACTIVE_LOW);
+        regVal |= (pol << ADXL366_INT_MAP_ACTIVE_LOW);
         writeRegister(ADXL366_INTMAP1_LOWER, regVal);
+        intPin1_activeLow = pol;
     }
     if(!pin || pin == INT_PIN_2) {
         if (!readRegister8(ADXL366_INTMAP2_LOWER, &regVal)) {
             return false;
         }
-        regVal &= ~0x80;
-        regVal |= (pol << 7);
+        regVal &= ~(1U << ADXL366_INT_MAP_ACTIVE_LOW);
+        regVal |= (pol << ADXL366_INT_MAP_ACTIVE_LOW);
         writeRegister(ADXL366_INTMAP2_LOWER, regVal);
+        intPin2_activeLow = pol;
     }
     return true;
 }
 
-bool ADXL366_WE::deleteInterrupt(adxl366_int type, uint8_t pin){
+bool ADXL366_WE::deleteInterrupt(adxl366_int_map type, uint8_t pin){
     return setInterrupt(type, pin, false);
 }
 
@@ -499,10 +501,11 @@ uint32_t ADXL366_WE::readAndClearInterrupts(){
     }
     uint32_t merged = 0;
     memcpy(&merged, status, 3); // Assumes Little Endian (LSB first)?
+    // Serial.printf("STATUS: %08x\n", merged);
     return merged;
 }
 
-bool ADXL366_WE::checkInterrupt(uint32_t source, adxl366_int type){
+bool ADXL366_WE::checkInterrupt(uint32_t source, adxl366_int_status type){
     return source & (1<<type);
 }
 
@@ -683,6 +686,9 @@ void ADXL366_WE::softReset()
 {
     writeRegister(ADXL366_SOFT_RESET, ADXL366_SOFT_RESET_VAL);
     delay(20);
+    // Write to any register to clear the ERR_USER_REGS interrupt which is set by a soft reset
+    // This happens to be one we don't use for any other purpose - but it could be anything as all regs should be reset to their defaults anyway.
+    writeRegister(ADXL366_TEMP_ADC_OVER_THRSH_H, 0);
 }
 
 bool ADXL366_WE::dumpAllRegisters()
@@ -721,6 +727,7 @@ void ADXL366_WE::writeRegister(adxl366_register reg, uint8_t val){
         digitalWrite(csPin, HIGH);
         _spi->endTransaction();
     }
+    //Serial.printf("ADXL366: Write reg 0x%02x val 0x%02x\n", reg, val);
 }
   
 bool ADXL366_WE::readRegister8(adxl366_register reg, uint8_t *val){
